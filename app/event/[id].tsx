@@ -18,6 +18,7 @@ import {
   MapPin,
   Users,
   AlertTriangle,
+  Edit3,
 } from "lucide-react-native";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useEvents } from "@/contexts/EventsContext";
@@ -25,12 +26,14 @@ import { useAuth } from "@/contexts/AuthContext";
 import Colors from "@/constants/colors";
 import { formatDate, formatTime } from "@/utils/dateFormatting";
 import LeftNavigation from "@/components/LeftNavigation";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export default function EventDetail() {
   const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams();
   const { events, updateEventResponse } = useEvents();
   const { currentUser, allUsers } = useAuth();
+  const { colors } = useTheme();
 
   const event = events.find((e) => e.id === id);
 
@@ -51,6 +54,12 @@ export default function EventDetail() {
     if (!currentUser) return;
     await updateEventResponse(event.id, currentUser.id, status);
   };
+
+  const handleEdit = () => {
+    router.push(`/edit-event/${event.id}`);
+  };
+
+  const canEdit = currentUser?.id === event.createdBy || currentUser?.role === "commissioner" || currentUser?.role === "director";
 
   const getResponseButtonStyle = (status: string) => {
     if (userResponse?.status === status) {
@@ -81,15 +90,24 @@ export default function EventDetail() {
       <View style={[styles.container, { paddingTop: insets.top }]}>
         <LeftNavigation />
         <View style={styles.content}>
-          <View style={styles.header}>
+          <View style={[styles.header, { backgroundColor: colors.card }]}>
             <TouchableOpacity
               style={styles.backButton}
               onPress={() => router.back()}
             >
-              <ArrowLeft color={Colors.text.primary} size={24} />
+              <ArrowLeft color={colors.text} size={24} />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>Event Details</Text>
-            <View style={{ width: 40 }} />
+            <Text style={[styles.headerTitle, { color: colors.text }]}>Event Details</Text>
+            {canEdit ? (
+              <TouchableOpacity
+                style={styles.editButton}
+                onPress={handleEdit}
+              >
+                <Edit3 color={colors.primary} size={20} />
+              </TouchableOpacity>
+            ) : (
+              <View style={{ width: 40 }} />
+            )}
           </View>
 
           <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
@@ -305,6 +323,12 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: "row",
     backgroundColor: Colors.background.main,
+  },
+  editButton: {
+    width: 40,
+    height: 40,
+    alignItems: "center",
+    justifyContent: "center",
   },
   content: {
     flex: 1,
