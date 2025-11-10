@@ -10,6 +10,7 @@ import {
   Alert,
   Platform,
   Switch,
+  useWindowDimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { X, AlertTriangle, MapPin, Users } from "lucide-react-native";
@@ -22,6 +23,8 @@ import { EventPriority, Conflict } from "@/types";
 
 export default function CreateEvent() {
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const isMobile = width < 768;
   const { addEvent } = useEvents();
   const { currentUser, allUsers } = useAuth();
 
@@ -139,7 +142,7 @@ export default function CreateEvent() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
+      <View style={[styles.container, { paddingTop: isMobile ? insets.top : 0, paddingBottom: isMobile ? insets.bottom : 0 }]}>
         <View style={styles.header}>
           <Text style={styles.headerTitle}>Create New Event</Text>
           <TouchableOpacity onPress={() => router.back()} style={styles.closeButton}>
@@ -147,7 +150,7 @@ export default function CreateEvent() {
           </TouchableOpacity>
         </View>
 
-        <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <ScrollView style={styles.content} showsVerticalScrollIndicator={false} contentContainerStyle={isMobile && styles.contentMobile}>
           <View style={styles.section}>
             <Text style={styles.label}>Event Title *</Text>
             <TextInput
@@ -186,7 +189,7 @@ export default function CreateEvent() {
             </View>
           </View>
 
-          <View style={styles.row}>
+          <View style={[styles.row, isMobile && styles.rowMobile]}>
             <View style={[styles.section, { flex: 1 }]}>
               <DateTimePicker
                 label="Start Date *"
@@ -206,7 +209,7 @@ export default function CreateEvent() {
             </View>
           </View>
 
-          <View style={styles.row}>
+          <View style={[styles.row, isMobile && styles.rowMobile]}>
             <View style={[styles.section, { flex: 1 }]}>
               <DateTimePicker
                 label="End Date *"
@@ -424,6 +427,9 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 24,
   },
+  contentMobile: {
+    padding: 16,
+  },
   section: {
     marginBottom: 24,
   },
@@ -468,6 +474,9 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: "row",
     gap: 16,
+  },
+  rowMobile: {
+    flexDirection: "column",
   },
   priorityButtons: {
     flexDirection: "row",

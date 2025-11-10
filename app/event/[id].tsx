@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Platform,
+  useWindowDimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
@@ -26,10 +27,15 @@ import { useAuth } from "@/contexts/AuthContext";
 import Colors from "@/constants/colors";
 import { formatDate, formatTime } from "@/utils/dateFormatting";
 import LeftNavigation from "@/components/LeftNavigation";
+import MobileHeader from "@/components/MobileHeader";
+import MobileNavDrawer from "@/components/MobileNavDrawer";
 import { useTheme } from "@/contexts/ThemeContext";
 
 export default function EventDetail() {
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const isMobile = width < 768;
+  const [drawerVisible, setDrawerVisible] = useState(false);
   const { id } = useLocalSearchParams();
   const { events, updateEventResponse } = useEvents();
   const { currentUser, allUsers } = useAuth();
@@ -87,31 +93,46 @@ export default function EventDetail() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <View style={[styles.container, { paddingTop: insets.top }]}>
-        <LeftNavigation />
-        <View style={styles.content}>
-          <View style={[styles.header, { backgroundColor: colors.card }]}>
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => router.back()}
-            >
-              <ArrowLeft color={colors.text} size={24} />
-            </TouchableOpacity>
-            <Text style={[styles.headerTitle, { color: colors.text }]}>Event Details</Text>
-            {canEdit ? (
+      <View style={[styles.container, { paddingTop: isMobile ? 0 : insets.top, backgroundColor: colors.background }]}>
+        {!isMobile && <LeftNavigation />}
+        {isMobile && <MobileNavDrawer visible={drawerVisible} onClose={() => setDrawerVisible(false)} />}
+        <View style={[styles.content, isMobile && styles.contentMobile]}>
+          {isMobile ? (
+            <MobileHeader
+              title="Event Details"
+              onMenuPress={() => setDrawerVisible(true)}
+              rightButton={
+                canEdit ? (
+                  <TouchableOpacity onPress={handleEdit}>
+                    <Edit3 color={colors.primary} size={24} />
+                  </TouchableOpacity>
+                ) : null
+              }
+            />
+          ) : (
+            <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
               <TouchableOpacity
-                style={styles.editButton}
-                onPress={handleEdit}
+                style={styles.backButton}
+                onPress={() => router.back()}
               >
-                <Edit3 color={colors.primary} size={20} />
+                <ArrowLeft color={colors.text} size={24} />
               </TouchableOpacity>
-            ) : (
-              <View style={{ width: 40 }} />
-            )}
-          </View>
+              <Text style={[styles.headerTitle, { color: colors.text }]}>Event Details</Text>
+              {canEdit ? (
+                <TouchableOpacity
+                  style={styles.editButton}
+                  onPress={handleEdit}
+                >
+                  <Edit3 color={colors.primary} size={20} />
+                </TouchableOpacity>
+              ) : (
+                <View style={{ width: 40 }} />
+              )}
+            </View>
+          )}
 
-          <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false}>
-            <View style={styles.eventHeader}>
+          <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false} contentContainerStyle={isMobile && styles.scrollContentMobile}>
+            <View style={[styles.eventHeader, { backgroundColor: colors.card, borderBottomColor: colors.border }, isMobile && styles.eventHeaderMobile]}>
               {event.hasConflict && (
                 <View style={styles.conflictWarning}>
                   <AlertTriangle color={Colors.status.warning} size={20} />
@@ -121,8 +142,8 @@ export default function EventDetail() {
                 </View>
               )}
 
-              <View style={styles.titleSection}>
-                <Text style={styles.eventTitle}>{event.title}</Text>
+              <View style={[styles.titleSection, isMobile && styles.titleSectionMobile]}>
+                <Text style={[styles.eventTitle, { color: colors.text }, isMobile && styles.eventTitleMobile]}>{event.title}</Text>
                 <View
                   style={[
                     styles.priorityBadge,
@@ -144,23 +165,23 @@ export default function EventDetail() {
                 </View>
               </View>
 
-              <Text style={styles.eventDescription}>{event.description}</Text>
+              <Text style={[styles.eventDescription, { color: colors.textSecondary }]}>{event.description}</Text>
             </View>
 
-            <View style={styles.detailsSection}>
+            <View style={[styles.detailsSection, isMobile && styles.detailsSectionMobile]}>
               <View style={styles.detailRow}>
                 <CalendarIcon color={Colors.primary.main} size={24} />
                 <View style={styles.detailContent}>
-                  <Text style={styles.detailLabel}>Date</Text>
-                  <Text style={styles.detailValue}>{formatDate(event.startTime)}</Text>
+                  <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Date</Text>
+                  <Text style={[styles.detailValue, { color: colors.text }]}>{formatDate(event.startTime)}</Text>
                 </View>
               </View>
 
               <View style={styles.detailRow}>
                 <Clock color={Colors.primary.main} size={24} />
                 <View style={styles.detailContent}>
-                  <Text style={styles.detailLabel}>Time</Text>
-                  <Text style={styles.detailValue}>
+                  <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Time</Text>
+                  <Text style={[styles.detailValue, { color: colors.text }]}>
                     {formatTime(event.startTime)} - {formatTime(event.endTime)}
                   </Text>
                 </View>
@@ -169,14 +190,14 @@ export default function EventDetail() {
               <View style={styles.detailRow}>
                 <MapPin color={Colors.primary.main} size={24} />
                 <View style={styles.detailContent}>
-                  <Text style={styles.detailLabel}>Location</Text>
-                  <Text style={styles.detailValue}>{event.location}</Text>
+                  <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Location</Text>
+                  <Text style={[styles.detailValue, { color: colors.text }]}>{event.location}</Text>
                 </View>
               </View>
             </View>
 
-            <View style={styles.responseSection}>
-              <Text style={styles.sectionTitle}>Your Response</Text>
+            <View style={[styles.responseSection, { backgroundColor: colors.card }, isMobile && styles.responseSectionMobile]}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Your Response</Text>
               <View style={styles.responseButtons}>
                 <TouchableOpacity
                   style={[styles.responseButton, getResponseButtonStyle("attending")]}
@@ -249,10 +270,10 @@ export default function EventDetail() {
               </View>
             </View>
 
-            <View style={styles.attendeesSection}>
+            <View style={[styles.attendeesSection, { backgroundColor: colors.card }, isMobile && styles.attendeesSectionMobile]}>
               <View style={styles.attendeesHeader}>
-                <Users color={Colors.text.primary} size={20} />
-                <Text style={styles.sectionTitle}>
+                <Users color={colors.text} size={20} />
+                <Text style={[styles.sectionTitle, { color: colors.text }]}>
                   Attendees ({event.responses.length})
                 </Text>
               </View>
@@ -262,10 +283,10 @@ export default function EventDetail() {
                   if (!user) return null;
 
                   return (
-                    <View key={response.userId} style={styles.attendeeItem}>
+                    <View key={response.userId} style={[styles.attendeeItem, { backgroundColor: colors.neutral.gray50 }]}>
                       <View style={styles.attendeeInfo}>
-                        <Text style={styles.attendeeName}>{user.name}</Text>
-                        <Text style={styles.attendeeRole}>{user.role}</Text>
+                        <Text style={[styles.attendeeName, { color: colors.text }]}>{user.name}</Text>
+                        <Text style={[styles.attendeeRole, { color: colors.textSecondary }]}>{user.role}</Text>
                       </View>
                       <View
                         style={[
@@ -322,7 +343,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     flexDirection: "row",
-    backgroundColor: Colors.background.main,
   },
   editButton: {
     width: 40,
@@ -338,15 +358,19 @@ const styles = StyleSheet.create({
       },
     }),
   },
+  contentMobile: {
+    marginLeft: 0,
+  },
+  scrollContentMobile: {
+    paddingBottom: 20,
+  },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 24,
     paddingVertical: 16,
-    backgroundColor: Colors.background.card,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border.light,
   },
   backButton: {
     width: 40,
@@ -364,9 +388,10 @@ const styles = StyleSheet.create({
   },
   eventHeader: {
     padding: 24,
-    backgroundColor: Colors.background.card,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border.light,
+  },
+  eventHeaderMobile: {
+    padding: 16,
   },
   conflictWarning: {
     flexDirection: "row",
@@ -389,17 +414,26 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     marginBottom: 16,
   },
+  titleSectionMobile: {
+    flexDirection: "column",
+    gap: 12,
+  },
   eventTitle: {
     fontSize: 28,
     fontWeight: "700" as const,
-    color: Colors.text.primary,
     flex: 1,
     marginRight: 16,
+  },
+  eventTitleMobile: {
+    fontSize: 22,
+    flex: 0,
+    marginRight: 0,
   },
   priorityBadge: {
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 6,
+    alignSelf: "flex-start",
   },
   priorityText: {
     fontSize: 12,
@@ -409,11 +443,14 @@ const styles = StyleSheet.create({
   eventDescription: {
     fontSize: 16,
     lineHeight: 24,
-    color: Colors.text.secondary,
   },
   detailsSection: {
     padding: 24,
     gap: 20,
+  },
+  detailsSectionMobile: {
+    padding: 16,
+    gap: 16,
   },
   detailRow: {
     flexDirection: "row",
@@ -425,23 +462,22 @@ const styles = StyleSheet.create({
   },
   detailLabel: {
     fontSize: 13,
-    color: Colors.text.secondary,
     marginBottom: 4,
   },
   detailValue: {
     fontSize: 16,
     fontWeight: "600" as const,
-    color: Colors.text.primary,
   },
   responseSection: {
     padding: 24,
-    backgroundColor: Colors.background.card,
     marginBottom: 16,
+  },
+  responseSectionMobile: {
+    padding: 16,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "600" as const,
-    color: Colors.text.primary,
     marginBottom: 16,
   },
   responseButtons: {
@@ -461,7 +497,9 @@ const styles = StyleSheet.create({
   },
   attendeesSection: {
     padding: 24,
-    backgroundColor: Colors.background.card,
+  },
+  attendeesSectionMobile: {
+    padding: 16,
   },
   attendeesHeader: {
     flexDirection: "row",
@@ -478,7 +516,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 12,
     paddingHorizontal: 16,
-    backgroundColor: Colors.neutral.gray50,
     borderRadius: 8,
   },
   attendeeInfo: {
@@ -487,11 +524,9 @@ const styles = StyleSheet.create({
   attendeeName: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: Colors.text.primary,
   },
   attendeeRole: {
     fontSize: 12,
-    color: Colors.text.secondary,
     marginTop: 2,
   },
   statusBadge: {
