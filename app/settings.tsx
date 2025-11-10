@@ -44,11 +44,7 @@ export default function Settings() {
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [drawerVisible, setDrawerVisible] = useState(false);
 
-  useEffect(() => {
-    loadNotificationSettings();
-  }, []);
-
-  const loadNotificationSettings = async () => {
+  const loadNotificationSettings = React.useCallback(async () => {
     try {
       const email = await AsyncStorage.getItem("emailNotifications");
       const push = await AsyncStorage.getItem("pushNotifications");
@@ -57,25 +53,29 @@ export default function Settings() {
     } catch (error) {
       console.error("Error loading notification settings:", error);
     }
-  };
+  }, []);
 
-  const handleEmailNotifications = async (value: boolean) => {
+  useEffect(() => {
+    loadNotificationSettings();
+  }, [loadNotificationSettings]);
+
+  const handleEmailNotifications = React.useCallback(async (value: boolean) => {
     setEmailNotifications(value);
     await AsyncStorage.setItem("emailNotifications", String(value));
-  };
+  }, []);
 
-  const handlePushNotifications = async (value: boolean) => {
+  const handlePushNotifications = React.useCallback(async (value: boolean) => {
     setPushNotifications(value);
     await AsyncStorage.setItem("pushNotifications", String(value));
-  };
+  }, []);
 
-  const handleLanguageSelect = async (lang: Language) => {
+  const handleLanguageSelect = React.useCallback(async (lang: Language) => {
     await changeLanguage(lang);
     setShowLanguageModal(false);
     Alert.alert("Success", `Language changed to ${lang === "en" ? "English" : "French"}`);
-  };
+  }, [changeLanguage]);
 
-  const renderSettingItem = (
+  const renderSettingItem = React.useCallback((
     icon: React.ReactElement,
     title: string,
     subtitle: string,
@@ -110,7 +110,7 @@ export default function Settings() {
         )}
       </TouchableOpacity>
     );
-  };
+  }, [colors]);
 
   const languageOptions: { value: Language; label: string }[] = [
     { value: "en", label: "English" },
