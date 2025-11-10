@@ -237,6 +237,28 @@ export const [EventsProvider, useEvents] = createContextHook(() => {
     }
 
     const updatedEvent = { ...eventToUpdate, ...updates, updatedAt: new Date().toISOString() };
+    
+    if (updates.assignedTo) {
+      const currentUserIds = eventToUpdate.assignedTo;
+      const newUserIds = updates.assignedTo;
+      
+      const existingResponses = eventToUpdate.responses.filter((r) =>
+        newUserIds.includes(r.userId)
+      );
+      
+      const newUsers = newUserIds.filter(
+        (userId) => !currentUserIds.includes(userId)
+      );
+      
+      const newResponses = newUsers.map((userId) => ({
+        userId,
+        status: "pending" as EventResponseStatus,
+        timestamp: new Date().toISOString(),
+      }));
+      
+      updatedEvent.responses = [...existingResponses, ...newResponses];
+    }
+    
     const otherEvents = events.filter(e => e.id !== eventId);
     
     const detectedConflicts = detectConflicts(updatedEvent, otherEvents);
