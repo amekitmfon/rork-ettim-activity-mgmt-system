@@ -23,8 +23,8 @@ import {
   BarChart3,
 } from "lucide-react-native";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { router, usePathname } from "expo-router";
-import Colors from "@/constants/colors";
 
 interface NavItem {
   id: string;
@@ -75,6 +75,7 @@ const NAV_ITEMS: NavItem[] = [
 
 export default function LeftNavigation() {
   const { currentUser, logout, hasPermission } = useAuth();
+  const { colors } = useTheme();
   const pathname = usePathname();
   const [expandedItems, setExpandedItems] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
@@ -111,7 +112,7 @@ export default function LeftNavigation() {
         <TouchableOpacity
           style={[
             styles.navItem,
-            active && styles.navItemActive,
+            active && { backgroundColor: colors.primary.main + "10" },
             { paddingLeft: 16 + level * 16 },
           ]}
           onPress={() => {
@@ -124,13 +125,14 @@ export default function LeftNavigation() {
         >
           <View style={styles.navItemContent}>
             <item.icon
-              color={active ? Colors.primary.main : Colors.text.secondary}
+              color={active ? colors.primary.main : colors.text.secondary}
               size={20}
             />
             <Text
               style={[
                 styles.navItemText,
-                active && styles.navItemTextActive,
+                { color: colors.text.secondary },
+                active && { color: colors.primary.main, fontWeight: "600" as const },
               ]}
             >
               {item.label}
@@ -139,9 +141,9 @@ export default function LeftNavigation() {
           {hasChildren && (
             <View>
               {isExpanded ? (
-                <ChevronDown color={Colors.text.secondary} size={16} />
+                <ChevronDown color={colors.text.secondary} size={16} />
               ) : (
-                <ChevronRight color={Colors.text.secondary} size={16} />
+                <ChevronRight color={colors.text.secondary} size={16} />
               )}
             </View>
           )}
@@ -159,18 +161,18 @@ export default function LeftNavigation() {
   if (!currentUser) return null;
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.logo}>ETTIM</Text>
-        <Text style={styles.subtitle}>Department Portal</Text>
+    <View style={[styles.container, { backgroundColor: colors.background.card, borderRightColor: colors.border.light }]}>
+      <View style={[styles.header, { borderBottomColor: colors.border.light }]}>
+        <Text style={[styles.logo, { color: colors.primary.main }]}>ETTIM</Text>
+        <Text style={[styles.subtitle, { color: colors.text.secondary }]}>Department Portal</Text>
       </View>
 
-      <View style={styles.searchContainer}>
-        <Search color={Colors.text.secondary} size={18} />
+      <View style={[styles.searchContainer, { backgroundColor: colors.neutral.gray50, borderColor: colors.border.light }]}>
+        <Search color={colors.text.secondary} size={18} />
         <TextInput
-          style={styles.searchInput}
+          style={[styles.searchInput, { color: colors.text.primary }]}
           placeholder="Search..."
-          placeholderTextColor={Colors.text.disabled}
+          placeholderTextColor={colors.text.disabled}
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
@@ -185,7 +187,7 @@ export default function LeftNavigation() {
         }).map((item) => renderNavItem(item))}
       </ScrollView>
 
-      <View style={styles.footer}>
+      <View style={[styles.footer, { borderTopColor: colors.border.light }]}>
         <TouchableOpacity
           style={styles.profileButton}
           onPress={() => setShowProfile(!showProfile)}
@@ -197,51 +199,51 @@ export default function LeftNavigation() {
                 style={styles.avatar}
               />
             ) : (
-              <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                <Text style={styles.avatarText}>
+              <View style={[styles.avatar, { backgroundColor: colors.primary.main }]}>
+                <Text style={[styles.avatarText, { color: colors.text.inverse }]}>
                   {currentUser.name.charAt(0)}
                 </Text>
               </View>
             )}
             <View style={styles.profileText}>
-              <Text style={styles.profileName} numberOfLines={1}>
+              <Text style={[styles.profileName, { color: colors.text.primary }]} numberOfLines={1}>
                 {currentUser.name}
               </Text>
-              <Text style={styles.profileRole} numberOfLines={1}>
+              <Text style={[styles.profileRole, { color: colors.text.secondary }]} numberOfLines={1}>
                 {currentUser.role.charAt(0).toUpperCase() + currentUser.role.slice(1)}
               </Text>
             </View>
           </View>
           <ChevronDown
-            color={Colors.text.secondary}
+            color={colors.text.secondary}
             size={16}
             style={{ transform: [{ rotate: showProfile ? "180deg" : "0deg" }] }}
           />
         </TouchableOpacity>
 
         {showProfile && (
-          <View style={styles.profileMenu}>
+          <View style={[styles.profileMenu, { backgroundColor: colors.neutral.gray50 }]}>
             <TouchableOpacity
               style={styles.profileMenuItem}
               onPress={() => handleNavigation("/settings")}
             >
-              <Settings color={Colors.text.secondary} size={18} />
-              <Text style={styles.profileMenuText}>Settings</Text>
+              <Settings color={colors.text.secondary} size={18} />
+              <Text style={[styles.profileMenuText, { color: colors.text.primary }]}>Settings</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.profileMenuItem}
               onPress={() => handleNavigation("/notifications")}
             >
-              <Bell color={Colors.text.secondary} size={18} />
-              <Text style={styles.profileMenuText}>Notifications</Text>
+              <Bell color={colors.text.secondary} size={18} />
+              <Text style={[styles.profileMenuText, { color: colors.text.primary }]}>Notifications</Text>
             </TouchableOpacity>
-            <View style={styles.divider} />
+            <View style={[styles.divider, { backgroundColor: colors.border.light }]} />
             <TouchableOpacity
               style={styles.profileMenuItem}
               onPress={handleLogout}
             >
-              <LogOut color={Colors.status.error} size={18} />
-              <Text style={[styles.profileMenuText, { color: Colors.status.error }]}>
+              <LogOut color={colors.status.error} size={18} />
+              <Text style={[styles.profileMenuText, { color: colors.status.error }]}>
                 Logout
               </Text>
             </TouchableOpacity>
@@ -256,9 +258,7 @@ const styles = StyleSheet.create({
   container: {
     width: 280,
     height: "100%",
-    backgroundColor: Colors.background.card,
     borderRightWidth: 1,
-    borderRightColor: Colors.border.light,
     flexDirection: "column",
     ...Platform.select({
       web: {
@@ -279,17 +279,14 @@ const styles = StyleSheet.create({
     paddingTop: 24,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border.light,
   },
   logo: {
     fontSize: 24,
     fontWeight: "700" as const,
-    color: Colors.primary.main,
     letterSpacing: 1,
   },
   subtitle: {
     fontSize: 12,
-    color: Colors.text.secondary,
     marginTop: 2,
   },
   searchContainer: {
@@ -298,16 +295,13 @@ const styles = StyleSheet.create({
     margin: 16,
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: Colors.neutral.gray50,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: Colors.border.light,
   },
   searchInput: {
     flex: 1,
     marginLeft: 8,
     fontSize: 14,
-    color: Colors.text.primary,
     outlineStyle: "none" as any,
   },
   navList: {
@@ -324,9 +318,6 @@ const styles = StyleSheet.create({
     marginVertical: 2,
     borderRadius: 8,
   },
-  navItemActive: {
-    backgroundColor: Colors.primary.main + "10",
-  },
   navItemContent: {
     flexDirection: "row",
     alignItems: "center",
@@ -336,16 +327,10 @@ const styles = StyleSheet.create({
   navItemText: {
     fontSize: 14,
     fontWeight: "500" as const,
-    color: Colors.text.secondary,
-  },
-  navItemTextActive: {
-    color: Colors.primary.main,
-    fontWeight: "600" as const,
   },
   footer: {
     padding: 12,
     borderTopWidth: 1,
-    borderTopColor: Colors.border.light,
   },
   profileButton: {
     flexDirection: "row",
@@ -364,14 +349,10 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-  },
-  avatarPlaceholder: {
-    backgroundColor: Colors.primary.main,
     alignItems: "center",
     justifyContent: "center",
   },
   avatarText: {
-    color: Colors.text.inverse,
     fontSize: 16,
     fontWeight: "600" as const,
   },
@@ -381,16 +362,13 @@ const styles = StyleSheet.create({
   profileName: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: Colors.text.primary,
   },
   profileRole: {
     fontSize: 12,
-    color: Colors.text.secondary,
     marginTop: 2,
   },
   profileMenu: {
     marginTop: 8,
-    backgroundColor: Colors.neutral.gray50,
     borderRadius: 8,
     padding: 4,
   },
@@ -404,11 +382,9 @@ const styles = StyleSheet.create({
   },
   profileMenuText: {
     fontSize: 14,
-    color: Colors.text.primary,
   },
   divider: {
     height: 1,
-    backgroundColor: Colors.border.light,
     marginVertical: 4,
   },
 });

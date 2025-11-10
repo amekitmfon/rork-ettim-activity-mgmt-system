@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { View, StyleSheet, Platform, useWindowDimensions } from "react-native";
 import LeftNavigation from "./LeftNavigation";
 import MobileNavDrawer from "./MobileNavDrawer";
-import Colors from "@/constants/colors";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface ResponsiveLayoutProps {
   children: React.ReactNode;
@@ -10,11 +10,12 @@ interface ResponsiveLayoutProps {
 
 export default function ResponsiveLayout({ children }: ResponsiveLayoutProps) {
   const { width } = useWindowDimensions();
+  const { colors } = useTheme();
   const isMobile = width < 768;
   const [drawerVisible, setDrawerVisible] = useState(false);
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: colors.background.main }]}>
       {!isMobile && <LeftNavigation />}
       {isMobile && (
         <MobileNavDrawer
@@ -42,7 +43,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     flexDirection: "row",
-    backgroundColor: Colors.background.main,
   },
   content: {
     flex: 1,

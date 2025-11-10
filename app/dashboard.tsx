@@ -23,7 +23,7 @@ import EventCard from "@/components/EventCard";
 import LeftNavigation from "@/components/LeftNavigation";
 import MobileHeader from "@/components/MobileHeader";
 import MobileNavDrawer from "@/components/MobileNavDrawer";
-import Colors from "@/constants/colors";
+import { useTheme } from "@/contexts/ThemeContext";
 
 export default function Dashboard() {
   const insets = useSafeAreaInsets();
@@ -32,6 +32,7 @@ export default function Dashboard() {
   const [drawerVisible, setDrawerVisible] = useState(false);
   const { upcomingEvents, unresolvedConflicts, conflictingEvents } = useEvents();
   const { currentUser } = useAuth();
+  const { colors } = useTheme();
 
   const getPendingResponses = () => {
     return upcomingEvents.filter((event) => {
@@ -45,7 +46,7 @@ export default function Dashboard() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: colors.background.main }]}>
         {!isMobile && <LeftNavigation />}
         {isMobile && <MobileNavDrawer visible={drawerVisible} onClose={() => setDrawerVisible(false)} />}
         <View style={[styles.content, isMobile && styles.contentMobile]}>
@@ -55,26 +56,26 @@ export default function Dashboard() {
               onMenuPress={() => setDrawerVisible(true)}
               rightButton={
                 <TouchableOpacity onPress={() => router.push("/create-event" as any)}>
-                  <Plus color={Colors.primary.main} size={24} />
+                  <Plus color={colors.primary.main} size={24} />
                 </TouchableOpacity>
               }
             />
           ) : (
-            <View style={styles.header}>
+            <View style={[styles.header, { backgroundColor: colors.background.card, borderBottomColor: colors.border.light }]}>
             <View>
-              <Text style={styles.greeting}>
+              <Text style={[styles.greeting, { color: colors.text.primary }]}>
                 Welcome back, {currentUser?.name.split(" ")[0]}
               </Text>
-              <Text style={styles.subtitle}>
+              <Text style={[styles.subtitle, { color: colors.text.secondary }]}>
                 Here&apos;s what&apos;s happening in your department
               </Text>
             </View>
             <TouchableOpacity
-              style={styles.createButton}
+              style={[styles.createButton, { backgroundColor: colors.primary.main }]}
               onPress={() => router.push("/create-event" as any)}
             >
-              <Plus color={Colors.text.inverse} size={20} />
-              <Text style={styles.createButtonText}>Create Event</Text>
+              <Plus color={colors.text.inverse} size={20} />
+              <Text style={[styles.createButtonText, { color: colors.text.inverse }]}>Create Event</Text>
             </TouchableOpacity>
           </View>
           )}
@@ -84,10 +85,10 @@ export default function Dashboard() {
             showsVerticalScrollIndicator={false}
           >
             <View style={styles.statsGrid}>
-              <View style={[styles.statCard, { backgroundColor: Colors.status.info + "10" }]}>
-                <CalendarIcon color={Colors.status.info} size={24} />
-                <Text style={styles.statValue}>{upcomingEvents.length}</Text>
-                <Text style={styles.statLabel}>Upcoming Events</Text>
+              <View style={[styles.statCard, { backgroundColor: colors.status.info + "10" }]}>
+                <CalendarIcon color={colors.status.info} size={24} />
+                <Text style={[styles.statValue, { color: colors.text.primary }]}>{upcomingEvents.length}</Text>
+                <Text style={[styles.statLabel, { color: colors.text.secondary }]}>Upcoming Events</Text>
               </View>
 
               <View
@@ -96,36 +97,36 @@ export default function Dashboard() {
                   {
                     backgroundColor:
                       unresolvedConflicts.length > 0
-                        ? Colors.status.warning + "10"
-                        : Colors.status.success + "10",
+                        ? colors.status.warning + "10"
+                        : colors.status.success + "10",
                   },
                 ]}
               >
                 <AlertTriangle
                   color={
                     unresolvedConflicts.length > 0
-                      ? Colors.status.warning
-                      : Colors.status.success
+                      ? colors.status.warning
+                      : colors.status.success
                   }
                   size={24}
                 />
-                <Text style={styles.statValue}>{unresolvedConflicts.length}</Text>
-                <Text style={styles.statLabel}>Conflicts</Text>
+                <Text style={[styles.statValue, { color: colors.text.primary }]}>{unresolvedConflicts.length}</Text>
+                <Text style={[styles.statLabel, { color: colors.text.secondary }]}>Conflicts</Text>
               </View>
 
               <View
-                style={[styles.statCard, { backgroundColor: Colors.accent.amber + "10" }]}
+                style={[styles.statCard, { backgroundColor: colors.accent.amber + "10" }]}
               >
-                <CheckCircle color={Colors.accent.amber} size={24} />
-                <Text style={styles.statValue}>{pendingResponses.length}</Text>
-                <Text style={styles.statLabel}>Pending</Text>
+                <CheckCircle color={colors.accent.amber} size={24} />
+                <Text style={[styles.statValue, { color: colors.text.primary }]}>{pendingResponses.length}</Text>
+                <Text style={[styles.statLabel, { color: colors.text.secondary }]}>Pending</Text>
               </View>
 
               <View
-                style={[styles.statCard, { backgroundColor: Colors.primary.main + "10" }]}
+                style={[styles.statCard, { backgroundColor: colors.primary.main + "10" }]}
               >
-                <TrendingUp color={Colors.primary.main} size={24} />
-                <Text style={styles.statValue}>
+                <TrendingUp color={colors.primary.main} size={24} />
+                <Text style={[styles.statValue, { color: colors.text.primary }]}>
                   {Math.round(
                     (upcomingEvents.filter((e) =>
                       e.responses.find(
@@ -137,15 +138,15 @@ export default function Dashboard() {
                   ) || 0}
                   %
                 </Text>
-                <Text style={styles.statLabel}>Attendance Rate</Text>
+                <Text style={[styles.statLabel, { color: colors.text.secondary }]}>Attendance Rate</Text>
               </View>
             </View>
 
             {unresolvedConflicts.length > 0 && (
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
-                  <AlertTriangle color={Colors.status.warning} size={20} />
-                  <Text style={styles.sectionTitle}>Scheduling Conflicts</Text>
+                  <AlertTriangle color={colors.status.warning} size={20} />
+                  <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Scheduling Conflicts</Text>
                 </View>
                 <View style={styles.conflictsList}>
                   {conflictingEvents.slice(0, 3).map((event) => (
@@ -162,7 +163,7 @@ export default function Dashboard() {
                     style={styles.viewAllButton}
                     onPress={() => router.push("/conflicts" as any)}
                   >
-                    <Text style={styles.viewAllText}>
+                    <Text style={[styles.viewAllText, { color: colors.primary.main }]}>
                       View all {conflictingEvents.length} conflicts
                     </Text>
                   </TouchableOpacity>
@@ -173,8 +174,8 @@ export default function Dashboard() {
             {pendingResponses.length > 0 && (
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
-                  <CheckCircle color={Colors.accent.amber} size={20} />
-                  <Text style={styles.sectionTitle}>Pending Responses</Text>
+                  <CheckCircle color={colors.accent.amber} size={20} />
+                  <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Pending Responses</Text>
                 </View>
                 <View style={styles.eventsList}>
                   {pendingResponses.slice(0, 3).map((event) => (
@@ -190,8 +191,8 @@ export default function Dashboard() {
 
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <CalendarIcon color={Colors.primary.main} size={20} />
-                <Text style={styles.sectionTitle}>Upcoming Events</Text>
+                <CalendarIcon color={colors.primary.main} size={20} />
+                <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Upcoming Events</Text>
               </View>
               <View style={styles.eventsList}>
                 {upcomingEvents.slice(0, 5).map((event) => (
@@ -204,9 +205,9 @@ export default function Dashboard() {
               </View>
               {upcomingEvents.length === 0 && (
                 <View style={styles.emptyState}>
-                  <CalendarIcon color={Colors.text.disabled} size={48} />
-                  <Text style={styles.emptyStateText}>No upcoming events</Text>
-                  <Text style={styles.emptyStateSubtext}>
+                  <CalendarIcon color={colors.text.disabled} size={48} />
+                  <Text style={[styles.emptyStateText, { color: colors.text.secondary }]}>No upcoming events</Text>
+                  <Text style={[styles.emptyStateSubtext, { color: colors.text.disabled }]}>
                     Create an event to get started
                   </Text>
                 </View>
@@ -223,7 +224,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     flexDirection: "row",
-    backgroundColor: Colors.background.main,
   },
   content: {
     flex: 1,
@@ -241,33 +241,27 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     padding: 24,
-    backgroundColor: Colors.background.card,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border.light,
     flexWrap: "wrap",
     gap: 12,
   },
   greeting: {
     fontSize: 24,
     fontWeight: "700" as const,
-    color: Colors.text.primary,
   },
   subtitle: {
     fontSize: 14,
-    color: Colors.text.secondary,
     marginTop: 4,
   },
   createButton: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    backgroundColor: Colors.primary.main,
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 8,
   },
   createButtonText: {
-    color: Colors.text.inverse,
     fontSize: 14,
     fontWeight: "600" as const,
   },
@@ -292,12 +286,10 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 32,
     fontWeight: "700" as const,
-    color: Colors.text.primary,
     marginTop: 12,
   },
   statLabel: {
     fontSize: 13,
-    color: Colors.text.secondary,
     marginTop: 4,
     textAlign: "center",
   },
@@ -313,7 +305,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: "600" as const,
-    color: Colors.text.primary,
   },
   eventsList: {
     gap: 12,
@@ -329,7 +320,6 @@ const styles = StyleSheet.create({
   viewAllText: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: Colors.primary.main,
   },
   emptyState: {
     alignItems: "center",
@@ -338,12 +328,10 @@ const styles = StyleSheet.create({
   emptyStateText: {
     fontSize: 16,
     fontWeight: "600" as const,
-    color: Colors.text.secondary,
     marginTop: 16,
   },
   emptyStateSubtext: {
     fontSize: 14,
-    color: Colors.text.disabled,
     marginTop: 4,
   },
 });
