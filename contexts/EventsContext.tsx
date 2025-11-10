@@ -227,16 +227,53 @@ export const [EventsProvider, useEvents] = createContextHook(() => {
 
   const updateEvent = useCallback(async (
     eventId: string,
-    updates: Partial<Event>
-  ) => {
+    updates: Partial<Event>,
+    proceedDespiteConflict?: boolean,
+    justification?: string
+  ): Promise<{ success: boolean; conflicts?: Conflict[] }> => {
+    const eventToUpdate = events.find(e => e.id === eventId);
+    if (!eventToUpdate) {
+      return { success: false };
+    }
+
+    const updatedEvent = { ...eventToUpdate, ...updates, updatedAt: new Date().toISOString() };
+    const otherEvents = events.filter(e => e.id !== eventId);
+    
+    const detectedConflicts = detectConflicts(updatedEvent, otherEvents);
+
+    if (detectedConflicts.length > 0 && !proceedDespiteConflict) {
+      return { success: false, conflicts: detectedConflicts };
+    }
+
+    if (detectedConflicts.length > 0 && proceedDespiteConflict) {
+      updatedEvent.hasConflict = true;
+      updatedEvent.conflictIds = detectedConflicts.map((c) => c.id);
+      updatedEvent.requiresJustification = true;
+      updatedEvent.justification = justification;
+
+      const updatedConflicts = [...conflicts, ...detectedConflicts];
+      setConflicts(updatedConflicts);
+      await AsyncStorage.setItem("conflicts", JSON.stringify(updatedConflicts));
+    } else {
+      updatedEvent.hasConflict = false;
+      updatedEvent.conflictIds = [];
+      
+      const updatedConflicts = conflicts.filter(
+        (c) => !c.eventIds.includes(eventId)
+      );
+      setConflicts(updatedConflicts);
+      await AsyncStorage.setItem("conflicts", JSON.stringify(updatedConflicts));
+    }
+
     const updatedEvents = events.map((event) =>
-      event.id === eventId
-        ? { ...event, ...updates, updatedAt: new Date().toISOString() }
-        : event
+      event.id === eventId ? updatedEvent : event
     );
+    
     setEvents(updatedEvents);
     await AsyncStorage.setItem("events", JSON.stringify(updatedEvents));
-  }, [events]);
+
+    return { success: true };
+  }, [events, conflicts, detectConflicts]);
 
   const deleteEvent = useCallback(async (eventId: string) => {
     const updatedEvents = events.filter((e) => e.id !== eventId);

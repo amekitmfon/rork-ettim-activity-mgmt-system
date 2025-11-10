@@ -7,17 +7,19 @@ import {
   TouchableOpacity,
   ScrollView,
   Alert,
+  Modal,
+  Platform,
   Switch,
   useWindowDimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { X, MapPin, Users } from "lucide-react-native";
+import { X, AlertTriangle, MapPin, Users } from "lucide-react-native";
 import { router, Stack, useLocalSearchParams } from "expo-router";
 import { useEvents } from "@/contexts/EventsContext";
 import { useAuth } from "@/contexts/AuthContext";
 import DateTimePicker from "@/components/DateTimePicker";
 import Colors from "@/constants/colors";
-import { EventPriority } from "@/types";
+import { EventPriority, Conflict } from "@/types";
 import { useTheme } from "@/contexts/ThemeContext";
 
 export default function EditEvent() {
@@ -42,6 +44,10 @@ export default function EditEvent() {
   const [selectedUsers, setSelectedUsers] = useState<string[]>([]);
   const [commissionerRequired, setCommissionerRequired] = useState(false);
   const [loading, setLoading] = useState(false);
+  
+  const [conflictModal, setConflictModal] = useState(false);
+  const [detectedConflicts, setDetectedConflicts] = useState<Conflict[]>([]);
+  const [justification, setJustification] = useState("");
 
   useEffect(() => {
     if (event) {
@@ -116,7 +122,7 @@ export default function EditEvent() {
     const [endDay, endMonth, endYear] = endDate.split("-");
     const endDateTime = new Date(`${endYear}-${endMonth}-${endDay}T${endTime}`).toISOString();
 
-    await updateEvent(event.id, {
+    const result = await updateEvent(event.id, {
       title,
       description,
       location,
@@ -128,7 +134,60 @@ export default function EditEvent() {
     });
 
     setLoading(false);
+
+    if (!result.success && result.conflicts) {
+      setDetectedConflicts(result.conflicts);
+      setConflictModal(true);
+    } else {
+      router.back();
+    }
+  };
+
+  const handleProceedWithConflict = async () => {
+    if (!justification.trim()) {
+      Alert.alert("Justification Required", "Please provide a justification for proceeding with this conflict.");
+      return;
+    }
+
+    setLoading(true);
+
+    const [startDay, startMonth, startYear] = startDate.split("-");
+    const startDateTime = new Date(`${startYear}-${startMonth}-${startDay}T${startTime}`).toISOString();
+    const [endDay, endMonth, endYear] = endDate.split("-");
+    const endDateTime = new Date(`${endYear}-${endMonth}-${endDay}T${endTime}`).toISOString();
+
+    await updateEvent(
+      event.id,
+      {
+        title,
+        description,
+        location,
+        startTime: startDateTime,
+        endTime: endDateTime,
+        priority,
+        assignedTo: selectedUsers,
+        commissionerRequired,
+      },
+      true,
+      justification
+    );
+
+    setLoading(false);
+    setConflictModal(false);
     router.back();
+  };
+
+  const getSeverityColor = (severity: Conflict["severity"]) => {
+    switch (severity) {
+      case "critical":
+        return Colors.priority.critical;
+      case "high":
+        return Colors.priority.high;
+      case "medium":
+        return Colors.priority.medium;
+      default:
+        return Colors.priority.low;
+    }
   };
 
   return (
@@ -311,6 +370,83 @@ export default function EditEvent() {
             </Text>
           </TouchableOpacity>
         </View>
+
+        <Modal
+          visible={conflictModal}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setConflictModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={[styles.modalContent, Platform.OS === "web" && { maxWidth: 500 }]}>
+              <View style={styles.modalHeader}>
+                <AlertTriangle color={Colors.status.warning} size={32} />
+                <Text style={[styles.modalTitle, { color: colors.text.primary }]}>Scheduling Conflict Detected</Text>
+              </View>
+
+              <Text style={[styles.modalDescription, { color: colors.text.secondary }]}>
+                This event update conflicts with existing schedules. Review the conflicts below:
+              </Text>
+
+              <View style={styles.conflictsList}>
+                {detectedConflicts.map((conflict, index) => (
+                  <View key={conflict.id} style={[styles.conflictItem, { backgroundColor: colors.background.elevated }]}>
+                    <View
+                      style={[
+                        styles.severityIndicator,
+                        { backgroundColor: getSeverityColor(conflict.severity) },
+                      ]}
+                    />
+                    <View style={styles.conflictDetails}>
+                      <Text style={[styles.conflictTitle, { color: colors.text.primary }]}>
+                        Conflict {index + 1}: {conflict.severity.toUpperCase()}
+                      </Text>
+                      <Text style={[styles.conflictText, { color: colors.text.secondary }]}>
+                        {conflict.overlapDuration} minute overlap
+                      </Text>
+                      <Text style={[styles.conflictText, { color: colors.text.secondary }]}>
+                        {conflict.affectedUserIds.length} attendee(s) affected
+                      </Text>
+                    </View>
+                  </View>
+                ))}
+              </View>
+
+              <View style={styles.justificationSection}>
+                <Text style={[styles.justificationLabel, { color: colors.text.primary }]}>
+                  Justification (required to proceed) *
+                </Text>
+                <TextInput
+                  style={[styles.input, styles.textArea, { backgroundColor: colors.background.card, borderColor: colors.border.light, color: colors.text.primary }]}
+                  placeholder="Explain why this event must proceed despite conflicts..."
+                  placeholderTextColor={Colors.text.disabled}
+                  value={justification}
+                  onChangeText={setJustification}
+                  multiline
+                  numberOfLines={3}
+                />
+              </View>
+
+              <View style={styles.modalActions}>
+                <TouchableOpacity
+                  style={[styles.modalCancelButton, { backgroundColor: Colors.neutral.gray100 }]}
+                  onPress={() => {
+                    setConflictModal(false);
+                    setJustification("");
+                  }}
+                >
+                  <Text style={[styles.modalCancelText, { color: Colors.text.secondary }]}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalProceedButton, { backgroundColor: Colors.status.warning }]}
+                  onPress={handleProceedWithConflict}
+                >
+                  <Text style={[styles.modalProceedText, { color: Colors.text.inverse }]}>Proceed Anyway</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
       </View>
     </>
   );
@@ -500,6 +636,102 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     fontSize: 16,
+    fontWeight: "600" as const,
+    color: Colors.text.inverse,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: 24,
+  },
+  modalContent: {
+    width: "100%",
+    backgroundColor: Colors.background.card,
+    borderRadius: 16,
+    padding: 24,
+  },
+  modalHeader: {
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "700" as const,
+    color: Colors.text.primary,
+    marginTop: 12,
+    textAlign: "center",
+  },
+  modalDescription: {
+    fontSize: 14,
+    color: Colors.text.secondary,
+    marginBottom: 16,
+    textAlign: "center",
+  },
+  conflictsList: {
+    gap: 12,
+    marginBottom: 20,
+  },
+  conflictItem: {
+    flexDirection: "row",
+    gap: 12,
+    padding: 12,
+    backgroundColor: Colors.neutral.gray50,
+    borderRadius: 8,
+  },
+  severityIndicator: {
+    width: 4,
+    borderRadius: 2,
+  },
+  conflictDetails: {
+    flex: 1,
+  },
+  conflictTitle: {
+    fontSize: 14,
+    fontWeight: "600" as const,
+    color: Colors.text.primary,
+    marginBottom: 4,
+  },
+  conflictText: {
+    fontSize: 12,
+    color: Colors.text.secondary,
+    marginTop: 2,
+  },
+  justificationSection: {
+    marginBottom: 20,
+  },
+  justificationLabel: {
+    fontSize: 14,
+    fontWeight: "600" as const,
+    color: Colors.text.primary,
+    marginBottom: 8,
+  },
+  modalActions: {
+    flexDirection: "row",
+    gap: 12,
+  },
+  modalCancelButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    backgroundColor: Colors.neutral.gray100,
+    alignItems: "center",
+  },
+  modalCancelText: {
+    fontSize: 14,
+    fontWeight: "600" as const,
+    color: Colors.text.secondary,
+  },
+  modalProceedButton: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    backgroundColor: Colors.status.warning,
+    alignItems: "center",
+  },
+  modalProceedText: {
+    fontSize: 14,
     fontWeight: "600" as const,
     color: Colors.text.inverse,
   },
