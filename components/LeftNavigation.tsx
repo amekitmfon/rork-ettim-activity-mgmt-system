@@ -260,17 +260,17 @@ const styles = StyleSheet.create({
     borderRightWidth: 1,
     borderRightColor: Colors.border.light,
     flexDirection: "column",
-    display: Platform.OS === 'web' ? 'none' : 'flex',
     ...Platform.select({
       web: {
+        display: 'flex' as any,
         position: "fixed" as any,
         left: 0,
         top: 0,
         bottom: 0,
         zIndex: 1000,
-        '@media (min-width: 768px)': {
-          display: 'flex',
-        },
+      },
+      default: {
+        display: 'flex',
       },
     }),
   },
