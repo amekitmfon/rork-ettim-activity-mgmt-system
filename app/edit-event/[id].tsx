@@ -80,11 +80,11 @@ export default function EditEvent() {
     return (
       <>
         <Stack.Screen options={{ headerShown: false }} />
-        <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom }]}>
-          <View style={[styles.header, { backgroundColor: colors.card }]}>
-            <Text style={[styles.headerTitle, { color: colors.text }]}>Event Not Found</Text>
+        <View style={[styles.container, { paddingTop: insets.top, paddingBottom: insets.bottom, backgroundColor: colors.background.main }]}>
+          <View style={[styles.header, { backgroundColor: colors.background.card, borderBottomColor: colors.border.light }]}>
+            <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Event Not Found</Text>
             <TouchableOpacity onPress={() => router.back()} style={styles.closeButton}>
-              <X color={colors.text} size={24} />
+              <X color={colors.text.primary} size={24} />
             </TouchableOpacity>
           </View>
         </View>
@@ -134,19 +134,19 @@ export default function EditEvent() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <View style={[styles.container, { paddingTop: isMobile ? insets.top : 0, paddingBottom: isMobile ? insets.bottom : 0, backgroundColor: colors.background }]}>
-        <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>Edit Event</Text>
+      <View style={[styles.container, { paddingTop: isMobile ? insets.top : 0, paddingBottom: isMobile ? insets.bottom : 0, backgroundColor: colors.background.main }]}>
+        <View style={[styles.header, { backgroundColor: colors.background.card, borderBottomColor: colors.border.light }]}>
+          <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Edit Event</Text>
           <TouchableOpacity onPress={() => router.back()} style={styles.closeButton}>
-            <X color={colors.text} size={24} />
+            <X color={colors.text.primary} size={24} />
           </TouchableOpacity>
         </View>
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false} contentContainerStyle={isMobile && styles.contentMobile}>
           <View style={styles.section}>
-            <Text style={[styles.label, { color: colors.text }]}>Event Title *</Text>
+            <Text style={[styles.label, { color: colors.text.primary }]}>Event Title *</Text>
             <TextInput
-              style={[styles.input, { backgroundColor: colors.card, borderColor: colors.border, color: colors.text }]}
+              style={[styles.input, { backgroundColor: colors.background.card, borderColor: colors.border.light, color: colors.text.primary }]}
               placeholder="Enter event title"
               placeholderTextColor={Colors.text.disabled}
               value={title}
@@ -155,9 +155,9 @@ export default function EditEvent() {
           </View>
 
           <View style={styles.section}>
-            <Text style={[styles.label, { color: colors.text }]}>Description *</Text>
+            <Text style={[styles.label, { color: colors.text.primary }]}>Description *</Text>
             <TextInput
-              style={[styles.input, styles.textArea, { backgroundColor: colors.card, borderColor: colors.border, color: colors.text }]}
+              style={[styles.input, styles.textArea, { backgroundColor: colors.background.card, borderColor: colors.border.light, color: colors.text.primary }]}
               placeholder="Enter event description"
               placeholderTextColor={Colors.text.disabled}
               value={description}
@@ -168,11 +168,11 @@ export default function EditEvent() {
           </View>
 
           <View style={styles.section}>
-            <Text style={[styles.label, { color: colors.text }]}>Location *</Text>
-            <View style={[styles.iconInput, { backgroundColor: colors.card, borderColor: colors.border }]}>
-              <MapPin color={colors.textSecondary} size={20} />
+            <Text style={[styles.label, { color: colors.text.primary }]}>Location *</Text>
+            <View style={[styles.iconInput, { backgroundColor: colors.background.card, borderColor: colors.border.light }]}>
+              <MapPin color={colors.text.secondary} size={20} />
               <TextInput
-                style={[styles.iconInputText, { color: colors.text }]}
+                style={[styles.iconInputText, { color: colors.text.primary }]}
                 placeholder="Enter location"
                 placeholderTextColor={Colors.text.disabled}
                 value={location}
@@ -222,14 +222,14 @@ export default function EditEvent() {
           </View>
 
           <View style={styles.section}>
-            <Text style={[styles.label, { color: colors.text }]}>Priority</Text>
+            <Text style={[styles.label, { color: colors.text.primary }]}>Priority</Text>
             <View style={styles.priorityButtons}>
               {(["critical", "high", "medium", "low"] as EventPriority[]).map((p) => (
                 <TouchableOpacity
                   key={p}
                   style={[
                     styles.priorityButton,
-                    { backgroundColor: priority === p ? colors.primary : Colors.neutral.gray100 },
+                    { backgroundColor: priority === p ? colors.primary.main : Colors.neutral.gray100 },
                   ]}
                   onPress={() => setPriority(p)}
                 >
@@ -249,24 +249,24 @@ export default function EditEvent() {
           <View style={styles.section}>
             <View style={styles.toggleRow}>
               <View style={styles.toggleLabel}>
-                <Text style={[styles.label, { color: colors.text }]}>Commissioner Required</Text>
-                <Text style={[styles.toggleDescription, { color: colors.textSecondary }]}>
+                <Text style={[styles.label, { color: colors.text.primary }]}>Commissioner Required</Text>
+                <Text style={[styles.toggleDescription, { color: colors.text.secondary }]}>
                   Mark if the commissioner must attend this event
                 </Text>
               </View>
               <Switch
                 value={commissionerRequired}
                 onValueChange={setCommissionerRequired}
-                trackColor={{ false: Colors.neutral.gray200, true: colors.primary }}
-                thumbColor={colors.card}
+                trackColor={{ false: Colors.neutral.gray200, true: colors.primary.main }}
+                thumbColor={colors.background.card}
               />
             </View>
           </View>
 
           <View style={styles.section}>
             <View style={styles.labelRow}>
-              <Users color={colors.text} size={20} />
-              <Text style={[styles.label, { color: colors.text }]}>Attendees *</Text>
+              <Users color={colors.text.primary} size={20} />
+              <Text style={[styles.label, { color: colors.text.primary }]}>Attendees *</Text>
             </View>
             <View style={styles.usersList}>
               {allUsers.map((user) => (
@@ -274,17 +274,17 @@ export default function EditEvent() {
                   key={user.id}
                   style={[
                     styles.userItem,
-                    { backgroundColor: colors.card, borderColor: colors.border },
-                    selectedUsers.includes(user.id) && { borderColor: colors.primary, backgroundColor: colors.primary + "10" },
+                    { backgroundColor: colors.background.card, borderColor: colors.border.light },
+                    selectedUsers.includes(user.id) && { borderColor: colors.primary.main, backgroundColor: colors.primary.main + "10" },
                   ]}
                   onPress={() => toggleUserSelection(user.id)}
                 >
                   <View style={styles.userInfo}>
-                    <Text style={[styles.userName, { color: colors.text }]}>{user.name}</Text>
-                    <Text style={[styles.userRole, { color: colors.textSecondary }]}>{user.role}</Text>
+                    <Text style={[styles.userName, { color: colors.text.primary }]}>{user.name}</Text>
+                    <Text style={[styles.userRole, { color: colors.text.secondary }]}>{user.role}</Text>
                   </View>
                   {selectedUsers.includes(user.id) && (
-                    <View style={[styles.checkmark, { backgroundColor: colors.primary }]}>
+                    <View style={[styles.checkmark, { backgroundColor: colors.primary.main }]}>
                       <Text style={styles.checkmarkText}>✓</Text>
                     </View>
                   )}
@@ -294,7 +294,7 @@ export default function EditEvent() {
           </View>
         </ScrollView>
 
-        <View style={[styles.footer, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
+        <View style={[styles.footer, { backgroundColor: colors.background.card, borderTopColor: colors.border.light }]}>
           <TouchableOpacity
             style={[styles.cancelButton, { backgroundColor: Colors.neutral.gray100 }]}
             onPress={() => router.back()}
@@ -302,7 +302,7 @@ export default function EditEvent() {
             <Text style={styles.cancelButtonText}>Cancel</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.saveButton, { backgroundColor: colors.primary }, loading && styles.saveButtonDisabled]}
+            style={[styles.saveButton, { backgroundColor: colors.primary.main }, loading && styles.saveButtonDisabled]}
             onPress={handleSave}
             disabled={loading}
           >

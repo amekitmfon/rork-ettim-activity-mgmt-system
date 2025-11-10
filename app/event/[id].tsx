@@ -93,7 +93,7 @@ export default function EventDetail() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <View style={[styles.container, { paddingTop: isMobile ? 0 : insets.top, backgroundColor: colors.background }]}>
+      <View style={[styles.container, { paddingTop: isMobile ? 0 : insets.top, backgroundColor: colors.background.main }]}>
         {!isMobile && <LeftNavigation />}
         {isMobile && <MobileNavDrawer visible={drawerVisible} onClose={() => setDrawerVisible(false)} />}
         <View style={[styles.content, isMobile && styles.contentMobile]}>
@@ -104,26 +104,26 @@ export default function EventDetail() {
               rightButton={
                 canEdit ? (
                   <TouchableOpacity onPress={handleEdit}>
-                    <Edit3 color={colors.primary} size={24} />
+                    <Edit3 color={colors.primary.main} size={24} />
                   </TouchableOpacity>
                 ) : null
               }
             />
           ) : (
-            <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+            <View style={[styles.header, { backgroundColor: colors.background.card, borderBottomColor: colors.border.light }]}>
               <TouchableOpacity
                 style={styles.backButton}
                 onPress={() => router.back()}
               >
-                <ArrowLeft color={colors.text} size={24} />
+                <ArrowLeft color={colors.text.primary} size={24} />
               </TouchableOpacity>
-              <Text style={[styles.headerTitle, { color: colors.text }]}>Event Details</Text>
+              <Text style={[styles.headerTitle, { color: colors.text.primary }]}>Event Details</Text>
               {canEdit ? (
                 <TouchableOpacity
                   style={styles.editButton}
                   onPress={handleEdit}
                 >
-                  <Edit3 color={colors.primary} size={20} />
+                  <Edit3 color={colors.primary.main} size={20} />
                 </TouchableOpacity>
               ) : (
                 <View style={{ width: 40 }} />
@@ -132,7 +132,7 @@ export default function EventDetail() {
           )}
 
           <ScrollView style={styles.scrollView} showsVerticalScrollIndicator={false} contentContainerStyle={isMobile && styles.scrollContentMobile}>
-            <View style={[styles.eventHeader, { backgroundColor: colors.card, borderBottomColor: colors.border }, isMobile && styles.eventHeaderMobile]}>
+            <View style={[styles.eventHeader, { backgroundColor: colors.background.card, borderBottomColor: colors.border.light }, isMobile && styles.eventHeaderMobile]}>
               {event.hasConflict && (
                 <View style={styles.conflictWarning}>
                   <AlertTriangle color={Colors.status.warning} size={20} />
@@ -143,7 +143,7 @@ export default function EventDetail() {
               )}
 
               <View style={[styles.titleSection, isMobile && styles.titleSectionMobile]}>
-                <Text style={[styles.eventTitle, { color: colors.text }, isMobile && styles.eventTitleMobile]}>{event.title}</Text>
+                <Text style={[styles.eventTitle, { color: colors.text.primary }, isMobile && styles.eventTitleMobile]}>{event.title}</Text>
                 <View
                   style={[
                     styles.priorityBadge,
@@ -165,23 +165,23 @@ export default function EventDetail() {
                 </View>
               </View>
 
-              <Text style={[styles.eventDescription, { color: colors.textSecondary }]}>{event.description}</Text>
+              <Text style={[styles.eventDescription, { color: colors.text.secondary }]}>{event.description}</Text>
             </View>
 
             <View style={[styles.detailsSection, isMobile && styles.detailsSectionMobile]}>
               <View style={styles.detailRow}>
                 <CalendarIcon color={Colors.primary.main} size={24} />
                 <View style={styles.detailContent}>
-                  <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Date</Text>
-                  <Text style={[styles.detailValue, { color: colors.text }]}>{formatDate(event.startTime)}</Text>
+                  <Text style={[styles.detailLabel, { color: colors.text.secondary }]}>Date</Text>
+                  <Text style={[styles.detailValue, { color: colors.text.primary }]}>{formatDate(event.startTime)}</Text>
                 </View>
               </View>
 
               <View style={styles.detailRow}>
                 <Clock color={Colors.primary.main} size={24} />
                 <View style={styles.detailContent}>
-                  <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Time</Text>
-                  <Text style={[styles.detailValue, { color: colors.text }]}>
+                  <Text style={[styles.detailLabel, { color: colors.text.secondary }]}>Time</Text>
+                  <Text style={[styles.detailValue, { color: colors.text.primary }]}>
                     {formatTime(event.startTime)} - {formatTime(event.endTime)}
                   </Text>
                 </View>
@@ -190,14 +190,14 @@ export default function EventDetail() {
               <View style={styles.detailRow}>
                 <MapPin color={Colors.primary.main} size={24} />
                 <View style={styles.detailContent}>
-                  <Text style={[styles.detailLabel, { color: colors.textSecondary }]}>Location</Text>
-                  <Text style={[styles.detailValue, { color: colors.text }]}>{event.location}</Text>
+                  <Text style={[styles.detailLabel, { color: colors.text.secondary }]}>Location</Text>
+                  <Text style={[styles.detailValue, { color: colors.text.primary }]}>{event.location}</Text>
                 </View>
               </View>
             </View>
 
-            <View style={[styles.responseSection, { backgroundColor: colors.card }, isMobile && styles.responseSectionMobile]}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Your Response</Text>
+            <View style={[styles.responseSection, { backgroundColor: colors.background.card }, isMobile && styles.responseSectionMobile]}>
+              <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Your Response</Text>
               <View style={styles.responseButtons}>
                 <TouchableOpacity
                   style={[styles.responseButton, getResponseButtonStyle("attending")]}
@@ -270,10 +270,10 @@ export default function EventDetail() {
               </View>
             </View>
 
-            <View style={[styles.attendeesSection, { backgroundColor: colors.card }, isMobile && styles.attendeesSectionMobile]}>
+            <View style={[styles.attendeesSection, { backgroundColor: colors.background.card }, isMobile && styles.attendeesSectionMobile]}>
               <View style={styles.attendeesHeader}>
-                <Users color={colors.text} size={20} />
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>
+                <Users color={colors.text.primary} size={20} />
+                <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
                   Attendees ({event.responses.length})
                 </Text>
               </View>
@@ -283,10 +283,10 @@ export default function EventDetail() {
                   if (!user) return null;
 
                   return (
-                    <View key={response.userId} style={[styles.attendeeItem, { backgroundColor: colors.neutral.gray50 }]}>
+                    <View key={response.userId} style={[styles.attendeeItem, { backgroundColor: colors.background.elevated }]}>
                       <View style={styles.attendeeInfo}>
-                        <Text style={[styles.attendeeName, { color: colors.text }]}>{user.name}</Text>
-                        <Text style={[styles.attendeeRole, { color: colors.textSecondary }]}>{user.role}</Text>
+                        <Text style={[styles.attendeeName, { color: colors.text.primary }]}>{user.name}</Text>
+                        <Text style={[styles.attendeeRole, { color: colors.text.secondary }]}>{user.role}</Text>
                       </View>
                       <View
                         style={[
