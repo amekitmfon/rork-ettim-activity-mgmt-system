@@ -6,8 +6,8 @@ import {
   ScrollView,
   TouchableOpacity,
   Platform,
+  useWindowDimensions,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   BarChart3,
   TrendingUp,
@@ -22,8 +22,9 @@ import { Stack } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEvents } from "@/contexts/EventsContext";
 import LeftNavigation from "@/components/LeftNavigation";
-import Colors from "@/constants/colors";
-
+import MobileHeader from "@/components/MobileHeader";
+import MobileNavDrawer from "@/components/MobileNavDrawer";
+import { useTheme } from "@/contexts/ThemeContext";
 
 type TimeRange = "week" | "month" | "quarter" | "year";
 
@@ -35,10 +36,13 @@ const TIME_RANGES: { value: TimeRange; label: string }[] = [
 ];
 
 export default function Analytics() {
-  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const isMobile = width < 768;
+  const [drawerVisible, setDrawerVisible] = useState(false);
   const { allUsers, hasPermission } = useAuth();
   const { events, conflicts } = useEvents();
   const [selectedRange, setSelectedRange] = useState<TimeRange>("month");
+  const { colors } = useTheme();
 
   const canAccessPage = hasPermission("director");
 
@@ -196,28 +200,28 @@ export default function Analytics() {
     subtitle: string,
     trend?: "up" | "down",
     trendValue?: string,
-    color: string = Colors.primary.main
+    color: string = colors.primary.main
   ) => {
     return (
-      <View style={[styles.metricCard, { borderLeftColor: color, borderLeftWidth: 4 }]}>
+      <View style={[styles.metricCard, { backgroundColor: colors.background.card, borderLeftColor: color, borderLeftWidth: 4, borderColor: colors.border.light }]}>
         <View style={styles.metricHeader}>
           <View style={[styles.iconContainer, { backgroundColor: color + "15" }]}>
             <Text>{icon}</Text>
           </View>
           <View style={styles.metricContent}>
-            <Text style={styles.metricTitle}>{title}</Text>
-            <Text style={styles.metricValue}>{value}</Text>
-            <Text style={styles.metricSubtitle}>{subtitle}</Text>
+            <Text style={[styles.metricTitle, { color: colors.text.secondary }]}>{title}</Text>
+            <Text style={[styles.metricValue, { color: colors.text.primary }]}>{value}</Text>
+            <Text style={[styles.metricSubtitle, { color: colors.text.secondary }]}>{subtitle}</Text>
             {trend && trendValue && (
               <View style={styles.trendContainer}>
                 {trend === "up" ? (
                   <TrendingUp
-                    color={Colors.status.success}
+                    color={colors.status.success}
                     size={14}
                   />
                 ) : (
                   <TrendingDown
-                    color={Colors.status.error}
+                    color={colors.status.error}
                     size={14}
                   />
                 )}
@@ -227,8 +231,8 @@ export default function Analytics() {
                     {
                       color:
                         trend === "up"
-                          ? Colors.status.success
-                          : Colors.status.error,
+                          ? colors.status.success
+                          : colors.status.error,
                     },
                   ]}
                 >
@@ -244,108 +248,126 @@ export default function Analytics() {
 
   if (!canAccessPage) {
     return (
-      <View style={[styles.container, { paddingTop: insets.top }]}>
-        <LeftNavigation />
-        <View style={styles.content}>
-          <View style={styles.accessDenied}>
-            <Text style={styles.accessDeniedText}>Access Denied</Text>
-            <Text style={styles.accessDeniedSubtext}>
-              You do not have permission to access this page.
-            </Text>
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <View style={[styles.container, { backgroundColor: colors.background.main }]}>
+          {!isMobile && <LeftNavigation />}
+          {isMobile && <MobileNavDrawer visible={drawerVisible} onClose={() => setDrawerVisible(false)} />}
+          <View style={[styles.content, isMobile && styles.contentMobile]}>
+            {isMobile && <MobileHeader title="Analytics" onMenuPress={() => setDrawerVisible(true)} />}
+            <View style={styles.accessDenied}>
+              <Text style={[styles.accessDeniedText, { color: colors.text.primary }]}>Access Denied</Text>
+              <Text style={[styles.accessDeniedSubtext, { color: colors.text.secondary }]}>
+                You do not have permission to access this page.
+              </Text>
+            </View>
           </View>
         </View>
-      </View>
+      </>
     );
   }
 
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <View style={[styles.container, { paddingTop: insets.top }]}>
-        <LeftNavigation />
-        <View style={styles.content}>
-          <View style={styles.header}>
-            <View>
-              <View style={styles.titleRow}>
-                <BarChart3 color={Colors.primary.main} size={28} />
-                <Text style={styles.title}>Analytics & Reports</Text>
+      <View style={[styles.container, { backgroundColor: colors.background.main }]}>
+        {!isMobile && <LeftNavigation />}
+        {isMobile && <MobileNavDrawer visible={drawerVisible} onClose={() => setDrawerVisible(false)} />}
+        <View style={[styles.content, isMobile && styles.contentMobile]}>
+          {isMobile ? (
+            <MobileHeader title="Analytics" onMenuPress={() => setDrawerVisible(true)} />
+          ) : (
+            <View style={[styles.header, { backgroundColor: colors.background.card, borderBottomColor: colors.border.light }]}>
+              <View>
+                <View style={styles.titleRow}>
+                  <BarChart3 color={colors.primary.main} size={28} />
+                  <Text style={[styles.title, { color: colors.text.primary }]}>Analytics & Reports</Text>
+                </View>
+                <Text style={[styles.subtitle, { color: colors.text.secondary }]}>
+                  Department performance metrics and insights
+                </Text>
               </View>
-              <Text style={styles.subtitle}>
-                Department performance metrics and insights
-              </Text>
             </View>
-            <View style={styles.rangeSelector}>
+          )}
+
+          <View style={[styles.rangeContainer, { backgroundColor: colors.background.card, borderBottomColor: colors.border.light }]}>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.rangeSelector}
+            >
               {TIME_RANGES.map((range) => (
                 <TouchableOpacity
                   key={range.value}
                   style={[
                     styles.rangeButton,
-                    selectedRange === range.value && styles.rangeButtonActive,
+                    { backgroundColor: colors.neutral.gray50, borderColor: colors.border.light },
+                    selectedRange === range.value && { backgroundColor: colors.primary.main, borderColor: colors.primary.main },
                   ]}
                   onPress={() => setSelectedRange(range.value)}
                 >
                   <Text
                     style={[
                       styles.rangeButtonText,
-                      selectedRange === range.value &&
-                        styles.rangeButtonTextActive,
+                      { color: colors.text.secondary },
+                      selectedRange === range.value && { color: colors.text.inverse, fontWeight: "600" as const },
                     ]}
                   >
                     {range.label}
                   </Text>
                 </TouchableOpacity>
               ))}
-            </View>
+            </ScrollView>
           </View>
 
           <ScrollView
             style={styles.scrollView}
             showsVerticalScrollIndicator={false}
           >
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Overview</Text>
+            <View style={[styles.section, { borderBottomColor: colors.border.light }]}>
+              <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Overview</Text>
               <View style={styles.metricsGrid}>
                 {renderMetricCard(
-                  <Calendar color={Colors.status.info} size={24} />,
+                  <Calendar color={colors.status.info} size={24} />,
                   "Total Events",
                   analytics.totalEvents,
                   `${analytics.criticalEvents} critical, ${analytics.highPriorityEvents} high priority`,
                   undefined,
                   undefined,
-                  Colors.status.info
+                  colors.status.info
                 )}
                 {renderMetricCard(
-                  <CheckCircle color={Colors.status.success} size={24} />,
+                  <CheckCircle color={colors.status.success} size={24} />,
                   "Attendance Rate",
                   `${analytics.overallAttendanceRate}%`,
                   `${analytics.attendingResponses} attending out of ${analytics.totalResponses} responses`,
                   analytics.overallAttendanceRate > 75 ? "up" : "down",
                   analytics.overallAttendanceRate > 75 ? "Excellent" : "Needs Attention",
-                  Colors.status.success
+                  colors.status.success
                 )}
                 {renderMetricCard(
-                  <AlertTriangle color={Colors.status.warning} size={24} />,
+                  <AlertTriangle color={colors.status.warning} size={24} />,
                   "Active Conflicts",
                   analytics.unresolvedConflicts,
                   `${analytics.resolvedConflicts} resolved, ${analytics.conflictResolutionRate}% resolution rate`,
                   analytics.unresolvedConflicts === 0 ? "up" : "down",
                   analytics.unresolvedConflicts === 0 ? "No conflicts" : "Attention needed",
-                  Colors.status.warning
+                  colors.status.warning
                 )}
                 {renderMetricCard(
-                  <Clock color={Colors.accent.amber} size={24} />,
+                  <Clock color={colors.accent.amber} size={24} />,
                   "Avg Response Time",
                   analytics.avgResponseHours > 0 ? `${analytics.avgResponseHours}h` : "N/A",
                   `${analytics.pendingResponses} pending responses`,
                   analytics.avgResponseHours < 24 ? "up" : "down",
                   analytics.avgResponseHours < 24 ? "Fast" : "Slow",
-                  Colors.accent.amber
+                  colors.accent.amber
                 )}
               </View>
             </View>
 
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Events by Priority</Text>
+            <View style={[styles.section, { borderBottomColor: colors.border.light }]}>
+              <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Events by Priority</Text>
               <View style={styles.priorityChart}>
                 <View style={styles.priorityBar}>
                   <View
@@ -353,7 +375,7 @@ export default function Analytics() {
                       styles.prioritySegment,
                       {
                         flex: analytics.eventsByPriority.critical || 1,
-                        backgroundColor: Colors.status.error,
+                        backgroundColor: colors.status.error,
                       },
                     ]}
                   />
@@ -362,7 +384,7 @@ export default function Analytics() {
                       styles.prioritySegment,
                       {
                         flex: analytics.eventsByPriority.high || 1,
-                        backgroundColor: Colors.status.warning,
+                        backgroundColor: colors.status.warning,
                       },
                     ]}
                   />
@@ -371,7 +393,7 @@ export default function Analytics() {
                       styles.prioritySegment,
                       {
                         flex: analytics.eventsByPriority.medium || 1,
-                        backgroundColor: Colors.status.info,
+                        backgroundColor: colors.status.info,
                       },
                     ]}
                   />
@@ -380,7 +402,7 @@ export default function Analytics() {
                       styles.prioritySegment,
                       {
                         flex: analytics.eventsByPriority.low || 1,
-                        backgroundColor: Colors.neutral.gray400,
+                        backgroundColor: colors.neutral.gray400,
                       },
                     ]}
                   />
@@ -390,10 +412,10 @@ export default function Analytics() {
                     <View
                       style={[
                         styles.legendDot,
-                        { backgroundColor: Colors.status.error },
+                        { backgroundColor: colors.status.error },
                       ]}
                     />
-                    <Text style={styles.legendText}>
+                    <Text style={[styles.legendText, { color: colors.text.secondary }]}>
                       Critical ({analytics.eventsByPriority.critical})
                     </Text>
                   </View>
@@ -401,10 +423,10 @@ export default function Analytics() {
                     <View
                       style={[
                         styles.legendDot,
-                        { backgroundColor: Colors.status.warning },
+                        { backgroundColor: colors.status.warning },
                       ]}
                     />
-                    <Text style={styles.legendText}>
+                    <Text style={[styles.legendText, { color: colors.text.secondary }]}>
                       High ({analytics.eventsByPriority.high})
                     </Text>
                   </View>
@@ -412,10 +434,10 @@ export default function Analytics() {
                     <View
                       style={[
                         styles.legendDot,
-                        { backgroundColor: Colors.status.info },
+                        { backgroundColor: colors.status.info },
                       ]}
                     />
-                    <Text style={styles.legendText}>
+                    <Text style={[styles.legendText, { color: colors.text.secondary }]}>
                       Medium ({analytics.eventsByPriority.medium})
                     </Text>
                   </View>
@@ -423,10 +445,10 @@ export default function Analytics() {
                     <View
                       style={[
                         styles.legendDot,
-                        { backgroundColor: Colors.neutral.gray400 },
+                        { backgroundColor: colors.neutral.gray400 },
                       ]}
                     />
-                    <Text style={styles.legendText}>
+                    <Text style={[styles.legendText, { color: colors.text.secondary }]}>
                       Low ({analytics.eventsByPriority.low})
                     </Text>
                   </View>
@@ -434,40 +456,38 @@ export default function Analytics() {
               </View>
             </View>
 
-
-
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Conflict Analysis</Text>
+            <View style={[styles.section, { borderBottomColor: colors.border.light }]}>
+              <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>Conflict Analysis</Text>
               <View style={styles.conflictStats}>
-                <View style={styles.conflictStatCard}>
-                  <AlertTriangle color={Colors.status.error} size={32} />
-                  <Text style={styles.conflictStatValue}>
+                <View style={[styles.conflictStatCard, { backgroundColor: colors.background.card, borderColor: colors.border.light }]}>
+                  <AlertTriangle color={colors.status.error} size={32} />
+                  <Text style={[styles.conflictStatValue, { color: colors.text.primary }]}>
                     {analytics.criticalConflicts}
                   </Text>
-                  <Text style={styles.conflictStatLabel}>
+                  <Text style={[styles.conflictStatLabel, { color: colors.text.secondary }]}>
                     Critical Conflicts
                   </Text>
                 </View>
-                <View style={styles.conflictStatCard}>
-                  <CheckCircle color={Colors.status.success} size={32} />
-                  <Text style={styles.conflictStatValue}>
+                <View style={[styles.conflictStatCard, { backgroundColor: colors.background.card, borderColor: colors.border.light }]}>
+                  <CheckCircle color={colors.status.success} size={32} />
+                  <Text style={[styles.conflictStatValue, { color: colors.text.primary }]}>
                     {analytics.resolvedConflicts}
                   </Text>
-                  <Text style={styles.conflictStatLabel}>Resolved</Text>
+                  <Text style={[styles.conflictStatLabel, { color: colors.text.secondary }]}>Resolved</Text>
                 </View>
-                <View style={styles.conflictStatCard}>
-                  <Clock color={Colors.accent.amber} size={32} />
-                  <Text style={styles.conflictStatValue}>
+                <View style={[styles.conflictStatCard, { backgroundColor: colors.background.card, borderColor: colors.border.light }]}>
+                  <Clock color={colors.accent.amber} size={32} />
+                  <Text style={[styles.conflictStatValue, { color: colors.text.primary }]}>
                     {analytics.unresolvedConflicts}
                   </Text>
-                  <Text style={styles.conflictStatLabel}>Pending</Text>
+                  <Text style={[styles.conflictStatLabel, { color: colors.text.secondary }]}>Pending</Text>
                 </View>
-                <View style={styles.conflictStatCard}>
-                  <Target color={Colors.primary.main} size={32} />
-                  <Text style={styles.conflictStatValue}>
+                <View style={[styles.conflictStatCard, { backgroundColor: colors.background.card, borderColor: colors.border.light }]}>
+                  <Target color={colors.primary.main} size={32} />
+                  <Text style={[styles.conflictStatValue, { color: colors.text.primary }]}>
                     {analytics.conflictResolutionRate}%
                   </Text>
-                  <Text style={styles.conflictStatLabel}>Resolution Rate</Text>
+                  <Text style={[styles.conflictStatLabel, { color: colors.text.secondary }]}>Resolution Rate</Text>
                 </View>
               </View>
             </View>
@@ -482,7 +502,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     flexDirection: "row",
-    backgroundColor: Colors.background.main,
   },
   content: {
     flex: 1,
@@ -492,11 +511,12 @@ const styles = StyleSheet.create({
       },
     }),
   },
+  contentMobile: {
+    marginLeft: 0,
+  },
   header: {
     padding: 24,
-    backgroundColor: Colors.background.card,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border.light,
   },
   titleRow: {
     flexDirection: "row",
@@ -507,38 +527,28 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: "700" as const,
-    color: Colors.text.primary,
   },
   subtitle: {
     fontSize: 14,
-    color: Colors.text.secondary,
-    marginBottom: 16,
+  },
+  rangeContainer: {
+    borderBottomWidth: 1,
+    paddingVertical: 12,
   },
   rangeSelector: {
     flexDirection: "row",
     gap: 8,
-    flexWrap: "wrap",
+    paddingHorizontal: 16,
   },
   rangeButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
-    backgroundColor: Colors.neutral.gray50,
     borderWidth: 1,
-    borderColor: Colors.border.light,
-  },
-  rangeButtonActive: {
-    backgroundColor: Colors.primary.main,
-    borderColor: Colors.primary.main,
   },
   rangeButtonText: {
     fontSize: 13,
     fontWeight: "500" as const,
-    color: Colors.text.secondary,
-  },
-  rangeButtonTextActive: {
-    color: Colors.text.inverse,
-    fontWeight: "600" as const,
   },
   scrollView: {
     flex: 1,
@@ -546,29 +556,19 @@ const styles = StyleSheet.create({
   section: {
     padding: 24,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border.light,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 16,
   },
   sectionTitle: {
     fontSize: 18,
     fontWeight: "600" as const,
-    color: Colors.text.primary,
     marginBottom: 16,
   },
   metricsGrid: {
     gap: 16,
   },
   metricCard: {
-    backgroundColor: Colors.background.card,
     borderRadius: 12,
     padding: 20,
     borderWidth: 1,
-    borderColor: Colors.border.light,
   },
   metricHeader: {
     flexDirection: "row",
@@ -586,18 +586,15 @@ const styles = StyleSheet.create({
   },
   metricTitle: {
     fontSize: 13,
-    color: Colors.text.secondary,
     marginBottom: 4,
   },
   metricValue: {
     fontSize: 28,
     fontWeight: "700" as const,
-    color: Colors.text.primary,
     marginBottom: 4,
   },
   metricSubtitle: {
     fontSize: 12,
-    color: Colors.text.secondary,
   },
   trendContainer: {
     flexDirection: "row",
@@ -638,7 +635,6 @@ const styles = StyleSheet.create({
   },
   legendText: {
     fontSize: 13,
-    color: Colors.text.secondary,
   },
   conflictStats: {
     flexDirection: "row",
@@ -648,22 +644,18 @@ const styles = StyleSheet.create({
   conflictStatCard: {
     flex: 1,
     minWidth: 140,
-    backgroundColor: Colors.background.card,
     borderRadius: 12,
     padding: 20,
     borderWidth: 1,
-    borderColor: Colors.border.light,
     alignItems: "center",
   },
   conflictStatValue: {
     fontSize: 32,
     fontWeight: "700" as const,
-    color: Colors.text.primary,
     marginTop: 12,
   },
   conflictStatLabel: {
     fontSize: 13,
-    color: Colors.text.secondary,
     marginTop: 4,
     textAlign: "center",
   },
@@ -676,12 +668,10 @@ const styles = StyleSheet.create({
   accessDeniedText: {
     fontSize: 24,
     fontWeight: "700" as const,
-    color: Colors.text.primary,
     marginBottom: 12,
   },
   accessDeniedSubtext: {
     fontSize: 16,
-    color: Colors.text.secondary,
     textAlign: "center",
   },
 });

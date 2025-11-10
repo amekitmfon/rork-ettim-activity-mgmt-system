@@ -8,7 +8,6 @@ import {
   Platform,
   useWindowDimensions,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Plus, Calendar as CalendarIcon, List, Grid3x3 } from "lucide-react-native";
 import { router, Stack } from "expo-router";
 import { useEvents } from "@/contexts/EventsContext";
@@ -16,14 +15,13 @@ import EventCard from "@/components/EventCard";
 import LeftNavigation from "@/components/LeftNavigation";
 import MobileHeader from "@/components/MobileHeader";
 import MobileNavDrawer from "@/components/MobileNavDrawer";
-import Colors from "@/constants/colors";
 import { EventPriority } from "@/types";
+import { useTheme } from "@/contexts/ThemeContext";
 
 type ViewMode = "list" | "calendar";
 type SortOption = "date" | "priority" | "title";
 
 export default function Calendar() {
-  const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const isMobile = width < 768;
   const [drawerVisible, setDrawerVisible] = useState(false);
@@ -31,6 +29,7 @@ export default function Calendar() {
   const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [sortBy, setSortBy] = useState<SortOption>("date");
   const [selectedDate, setSelectedDate] = useState(new Date());
+  const { colors } = useTheme();
 
   const sortedEvents = useMemo(() => {
     const sorted = [...events];
@@ -110,15 +109,23 @@ export default function Calendar() {
       days.push(
         <TouchableOpacity
           key={day}
-          style={[styles.calendarDay, isToday && styles.calendarDayToday]}
+          style={[
+            styles.calendarDay,
+            { borderColor: colors.border.light },
+            isToday && { backgroundColor: colors.primary.main + "20", borderColor: colors.primary.main },
+          ]}
           onPress={() => setSelectedDate(date)}
         >
-          <Text style={[styles.calendarDayText, isToday && styles.calendarDayTextToday]}>
+          <Text style={[
+            styles.calendarDayText,
+            { color: colors.text.primary },
+            isToday && { color: colors.primary.main },
+          ]}>
             {day}
           </Text>
           {eventsOnDay.length > 0 && (
-            <View style={styles.eventIndicator}>
-              <Text style={styles.eventIndicatorText}>{eventsOnDay.length}</Text>
+            <View style={[styles.eventIndicator, { backgroundColor: colors.primary.main }]}>
+              <Text style={[styles.eventIndicatorText, { color: colors.text.inverse }]}>{eventsOnDay.length}</Text>
             </View>
           )}
         </TouchableOpacity>
@@ -129,34 +136,34 @@ export default function Calendar() {
       <View>
         <View style={styles.calendarHeader}>
           <TouchableOpacity
-            style={styles.monthButton}
+            style={[styles.monthButton, { backgroundColor: colors.neutral.gray100 }]}
             onPress={() => {
               const newDate = new Date(selectedDate);
               newDate.setMonth(newDate.getMonth() - 1);
               setSelectedDate(newDate);
             }}
           >
-            <Text style={styles.monthButtonText}>←</Text>
+            <Text style={[styles.monthButtonText, { color: colors.text.primary }]}>←</Text>
           </TouchableOpacity>
-          <Text style={styles.monthTitle}>
+          <Text style={[styles.monthTitle, { color: colors.text.primary }]}>
             {selectedDate.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
           </Text>
           <TouchableOpacity
-            style={styles.monthButton}
+            style={[styles.monthButton, { backgroundColor: colors.neutral.gray100 }]}
             onPress={() => {
               const newDate = new Date(selectedDate);
               newDate.setMonth(newDate.getMonth() + 1);
               setSelectedDate(newDate);
             }}
           >
-            <Text style={styles.monthButtonText}>→</Text>
+            <Text style={[styles.monthButtonText, { color: colors.text.primary }]}>→</Text>
           </TouchableOpacity>
         </View>
 
         <View style={styles.weekDaysRow}>
           {weekDays.map((day) => (
             <View key={day} style={styles.weekDay}>
-              <Text style={styles.weekDayText}>{day}</Text>
+              <Text style={[styles.weekDayText, { color: colors.text.secondary }]}>{day}</Text>
             </View>
           ))}
         </View>
@@ -165,8 +172,8 @@ export default function Calendar() {
           {days}
         </View>
 
-        <View style={styles.selectedDateEvents}>
-          <Text style={styles.selectedDateTitle}>
+        <View style={[styles.selectedDateEvents, { borderTopColor: colors.border.light }]}>
+          <Text style={[styles.selectedDateTitle, { color: colors.text.primary }]}>
             Events on {selectedDate.toLocaleDateString("en-US", { month: "long", day: "numeric" })}
           </Text>
           {getEventsForDate(selectedDate).length > 0 ? (
@@ -180,7 +187,7 @@ export default function Calendar() {
               ))}
             </View>
           ) : (
-            <Text style={styles.noEventsText}>No events on this date</Text>
+            <Text style={[styles.noEventsText, { color: colors.text.secondary }]}>No events on this date</Text>
           )}
         </View>
       </View>
@@ -190,7 +197,7 @@ export default function Calendar() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <View style={styles.container}>
+      <View style={[styles.container, { backgroundColor: colors.background.main }]}>
         {!isMobile && <LeftNavigation />}
         {isMobile && <MobileNavDrawer visible={drawerVisible} onClose={() => setDrawerVisible(false)} />}
         <View style={[styles.content, isMobile && styles.contentMobile]}>
@@ -200,45 +207,46 @@ export default function Calendar() {
               onMenuPress={() => setDrawerVisible(true)}
               rightButton={
                 <TouchableOpacity onPress={() => router.push("/create-event" as any)}>
-                  <Plus color={Colors.primary.main} size={24} />
+                  <Plus color={colors.primary.main} size={24} />
                 </TouchableOpacity>
               }
             />
           ) : (
-            <View style={styles.header}>
+            <View style={[styles.header, { backgroundColor: colors.background.card, borderBottomColor: colors.border.light }]}>
             <View>
-              <Text style={styles.greeting}>Calendar</Text>
-              <Text style={styles.subtitle}>
+              <Text style={[styles.greeting, { color: colors.text.primary }]}>Calendar</Text>
+              <Text style={[styles.subtitle, { color: colors.text.secondary }]}>
                 View and manage all department events
               </Text>
             </View>
             <TouchableOpacity
-              style={styles.createButton}
+              style={[styles.createButton, { backgroundColor: colors.primary.main }]}
               onPress={() => router.push("/create-event" as any)}
             >
-              <Plus color={Colors.text.inverse} size={20} />
-              <Text style={styles.createButtonText}>Create Event</Text>
+              <Plus color={colors.text.inverse} size={20} />
+              <Text style={[styles.createButtonText, { color: colors.text.inverse }]}>Create Event</Text>
             </TouchableOpacity>
           </View>
           )}
 
-          <View style={styles.controls}>
-            <View style={styles.viewToggle}>
+          <View style={[styles.controls, { backgroundColor: colors.background.card, borderBottomColor: colors.border.light }]}>
+            <View style={[styles.viewToggle, { backgroundColor: colors.neutral.gray100 }]}>
               <TouchableOpacity
                 style={[
                   styles.viewButton,
-                  viewMode === "list" && styles.viewButtonActive,
+                  viewMode === "list" && { backgroundColor: colors.primary.main },
                 ]}
                 onPress={() => setViewMode("list")}
               >
                 <List
-                  color={viewMode === "list" ? Colors.text.inverse : Colors.text.secondary}
+                  color={viewMode === "list" ? colors.text.inverse : colors.text.secondary}
                   size={18}
                 />
                 <Text
                   style={[
                     styles.viewButtonText,
-                    viewMode === "list" && styles.viewButtonTextActive,
+                    { color: viewMode === "list" ? colors.text.inverse : colors.text.secondary },
+                    viewMode === "list" && { fontWeight: "600" as const },
                   ]}
                 >
                   List
@@ -247,18 +255,19 @@ export default function Calendar() {
               <TouchableOpacity
                 style={[
                   styles.viewButton,
-                  viewMode === "calendar" && styles.viewButtonActive,
+                  viewMode === "calendar" && { backgroundColor: colors.primary.main },
                 ]}
                 onPress={() => setViewMode("calendar")}
               >
                 <Grid3x3
-                  color={viewMode === "calendar" ? Colors.text.inverse : Colors.text.secondary}
+                  color={viewMode === "calendar" ? colors.text.inverse : colors.text.secondary}
                   size={18}
                 />
                 <Text
                   style={[
                     styles.viewButtonText,
-                    viewMode === "calendar" && styles.viewButtonTextActive,
+                    { color: viewMode === "calendar" ? colors.text.inverse : colors.text.secondary },
+                    viewMode === "calendar" && { fontWeight: "600" as const },
                   ]}
                 >
                   Calendar
@@ -271,14 +280,16 @@ export default function Calendar() {
                 <TouchableOpacity
                   style={[
                     styles.sortButton,
-                    sortBy === "date" && styles.sortButtonActive,
+                    { backgroundColor: colors.neutral.gray100 },
+                    sortBy === "date" && { backgroundColor: colors.primary.main },
                   ]}
                   onPress={() => setSortBy("date")}
                 >
                   <Text
                     style={[
                       styles.sortButtonText,
-                      sortBy === "date" && styles.sortButtonTextActive,
+                      { color: sortBy === "date" ? colors.text.inverse : colors.text.secondary },
+                      sortBy === "date" && { fontWeight: "600" as const },
                     ]}
                   >
                     Date
@@ -287,14 +298,16 @@ export default function Calendar() {
                 <TouchableOpacity
                   style={[
                     styles.sortButton,
-                    sortBy === "priority" && styles.sortButtonActive,
+                    { backgroundColor: colors.neutral.gray100 },
+                    sortBy === "priority" && { backgroundColor: colors.primary.main },
                   ]}
                   onPress={() => setSortBy("priority")}
                 >
                   <Text
                     style={[
                       styles.sortButtonText,
-                      sortBy === "priority" && styles.sortButtonTextActive,
+                      { color: sortBy === "priority" ? colors.text.inverse : colors.text.secondary },
+                      sortBy === "priority" && { fontWeight: "600" as const },
                     ]}
                   >
                     Priority
@@ -303,14 +316,16 @@ export default function Calendar() {
                 <TouchableOpacity
                   style={[
                     styles.sortButton,
-                    sortBy === "title" && styles.sortButtonActive,
+                    { backgroundColor: colors.neutral.gray100 },
+                    sortBy === "title" && { backgroundColor: colors.primary.main },
                   ]}
                   onPress={() => setSortBy("title")}
                 >
                   <Text
                     style={[
                       styles.sortButtonText,
-                      sortBy === "title" && styles.sortButtonTextActive,
+                      { color: sortBy === "title" ? colors.text.inverse : colors.text.secondary },
+                      sortBy === "title" && { fontWeight: "600" as const },
                     ]}
                   >
                     Title
@@ -328,8 +343,8 @@ export default function Calendar() {
               <>
                 <View style={styles.section}>
                   <View style={styles.sectionHeader}>
-                    <CalendarIcon color={Colors.primary.main} size={20} />
-                    <Text style={styles.sectionTitle}>
+                    <CalendarIcon color={colors.primary.main} size={20} />
+                    <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
                       Upcoming Events ({upcomingEvents.length})
                     </Text>
                   </View>
@@ -344,9 +359,9 @@ export default function Calendar() {
                   </View>
                   {upcomingEvents.length === 0 && (
                     <View style={styles.emptyState}>
-                      <CalendarIcon color={Colors.text.disabled} size={48} />
-                      <Text style={styles.emptyStateText}>No upcoming events</Text>
-                      <Text style={styles.emptyStateSubtext}>
+                      <CalendarIcon color={colors.text.disabled} size={48} />
+                      <Text style={[styles.emptyStateText, { color: colors.text.secondary }]}>No upcoming events</Text>
+                      <Text style={[styles.emptyStateSubtext, { color: colors.text.disabled }]}>
                         Create an event to get started
                       </Text>
                     </View>
@@ -356,8 +371,8 @@ export default function Calendar() {
                 {pastEvents.length > 0 && (
                   <View style={styles.section}>
                     <View style={styles.sectionHeader}>
-                      <CalendarIcon color={Colors.text.secondary} size={20} />
-                      <Text style={styles.sectionTitle}>
+                      <CalendarIcon color={colors.text.secondary} size={20} />
+                      <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
                         Past Events ({pastEvents.length})
                       </Text>
                     </View>
@@ -389,7 +404,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     flexDirection: "row",
-    backgroundColor: Colors.background.main,
   },
   content: {
     flex: 1,
@@ -407,40 +421,32 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     padding: 24,
-    backgroundColor: Colors.background.card,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border.light,
     flexWrap: "wrap",
     gap: 12,
   },
   greeting: {
     fontSize: 24,
     fontWeight: "700" as const,
-    color: Colors.text.primary,
   },
   subtitle: {
     fontSize: 14,
-    color: Colors.text.secondary,
     marginTop: 4,
   },
   createButton: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    backgroundColor: Colors.primary.main,
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 8,
   },
   createButtonText: {
-    color: Colors.text.inverse,
     fontSize: 14,
     fontWeight: "600" as const,
   },
   controls: {
-    backgroundColor: Colors.background.card,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border.light,
     paddingHorizontal: 16,
     paddingVertical: 12,
     flexDirection: "row",
@@ -452,7 +458,6 @@ const styles = StyleSheet.create({
   viewToggle: {
     flexDirection: "row",
     gap: 8,
-    backgroundColor: Colors.neutral.gray100,
     padding: 4,
     borderRadius: 8,
   },
@@ -464,16 +469,8 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 6,
   },
-  viewButtonActive: {
-    backgroundColor: Colors.primary.main,
-  },
   viewButtonText: {
     fontSize: 14,
-    fontWeight: "600" as const,
-    color: Colors.text.secondary,
-  },
-  viewButtonTextActive: {
-    color: Colors.text.inverse,
   },
   sortButtons: {
     flexDirection: "row",
@@ -483,18 +480,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
-    backgroundColor: Colors.neutral.gray100,
-  },
-  sortButtonActive: {
-    backgroundColor: Colors.primary.main,
   },
   sortButtonText: {
     fontSize: 14,
-    fontWeight: "600" as const,
-    color: Colors.text.secondary,
-  },
-  sortButtonTextActive: {
-    color: Colors.text.inverse,
   },
   scrollView: {
     flex: 1,
@@ -511,7 +499,6 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: "600" as const,
-    color: Colors.text.primary,
   },
   eventsList: {
     gap: 12,
@@ -523,12 +510,10 @@ const styles = StyleSheet.create({
   emptyStateText: {
     fontSize: 16,
     fontWeight: "600" as const,
-    color: Colors.text.secondary,
     marginTop: 16,
   },
   emptyStateSubtext: {
     fontSize: 14,
-    color: Colors.text.disabled,
     marginTop: 4,
   },
   calendarHeader: {
@@ -540,18 +525,15 @@ const styles = StyleSheet.create({
   },
   monthButton: {
     padding: 8,
-    backgroundColor: Colors.neutral.gray100,
     borderRadius: 8,
   },
   monthButtonText: {
     fontSize: 20,
     fontWeight: "700" as const,
-    color: Colors.text.primary,
   },
   monthTitle: {
     fontSize: 18,
     fontWeight: "700" as const,
-    color: Colors.text.primary,
   },
   weekDaysRow: {
     flexDirection: "row",
@@ -565,7 +547,6 @@ const styles = StyleSheet.create({
   weekDayText: {
     fontSize: 12,
     fontWeight: "600" as const,
-    color: Colors.text.secondary,
   },
   calendarGrid: {
     flexDirection: "row",
@@ -578,23 +559,13 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     padding: 8,
     borderWidth: 1,
-    borderColor: Colors.border.light,
-  },
-  calendarDayToday: {
-    backgroundColor: Colors.primary.main + "20",
-    borderColor: Colors.primary.main,
   },
   calendarDayText: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: Colors.text.primary,
-  },
-  calendarDayTextToday: {
-    color: Colors.primary.main,
   },
   eventIndicator: {
     marginTop: 4,
-    backgroundColor: Colors.primary.main,
     borderRadius: 10,
     minWidth: 20,
     height: 20,
@@ -605,23 +576,19 @@ const styles = StyleSheet.create({
   eventIndicatorText: {
     fontSize: 10,
     fontWeight: "700" as const,
-    color: Colors.text.inverse,
   },
   selectedDateEvents: {
     marginTop: 24,
     paddingTop: 24,
     borderTopWidth: 1,
-    borderTopColor: Colors.border.light,
   },
   selectedDateTitle: {
     fontSize: 16,
     fontWeight: "600" as const,
-    color: Colors.text.primary,
     marginBottom: 12,
   },
   noEventsText: {
     fontSize: 14,
-    color: Colors.text.secondary,
     textAlign: "center",
     paddingVertical: 24,
   },

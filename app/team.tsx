@@ -8,8 +8,8 @@ import {
   TextInput,
   Platform,
   Image,
+  useWindowDimensions,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   Users,
   Search,
@@ -25,48 +25,37 @@ import { Stack } from "expo-router";
 import { useAuth } from "@/contexts/AuthContext";
 import { useEvents } from "@/contexts/EventsContext";
 import LeftNavigation from "@/components/LeftNavigation";
-import Colors from "@/constants/colors";
+import MobileHeader from "@/components/MobileHeader";
+import MobileNavDrawer from "@/components/MobileNavDrawer";
+import { useTheme } from "@/contexts/ThemeContext";
 import { User, UserRole } from "@/types";
 
-const ROLE_COLORS: Record<UserRole, string> = {
-  commissioner: Colors.status.error,
-  director: Colors.primary.dark,
-  registry: Colors.status.info,
-  external: Colors.neutral.gray400,
-};
-
-const ROLE_LABELS: Record<UserRole, string> = {
-  commissioner: "Commissioner",
-  director: "Director",
-  registry: "Registry",
-  external: "External",
-};
-
 export default function TeamManagement() {
-  const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const isMobile = width < 768;
+  const [drawerVisible, setDrawerVisible] = useState(false);
   const { allUsers, currentUser, hasPermission } = useAuth();
   const { events } = useEvents();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedRole, setSelectedRole] = useState<UserRole | "all">("all");
+  const { colors } = useTheme();
+
+  const ROLE_COLORS: Record<UserRole, string> = {
+    commissioner: colors.status.error,
+    director: colors.primary.dark,
+    registry: colors.status.info,
+    external: colors.neutral.gray400,
+  };
+
+  const ROLE_LABELS: Record<UserRole, string> = {
+    commissioner: "Commissioner",
+    director: "Director",
+    registry: "Registry",
+    external: "External",
+  };
 
   const canAccessPage = hasPermission("director");
   const canManageUsers = hasPermission("director");
-
-  if (!canAccessPage) {
-    return (
-      <View style={[styles.container, { paddingTop: insets.top }]}>
-        <LeftNavigation />
-        <View style={styles.content}>
-          <View style={styles.accessDenied}>
-            <Text style={styles.accessDeniedText}>Access Denied</Text>
-            <Text style={styles.accessDeniedSubtext}>
-              You do not have permission to access this page.
-            </Text>
-          </View>
-        </View>
-      </View>
-    );
-  }
 
   const filteredUsers = useMemo(() => {
     let filtered = allUsers;
@@ -128,7 +117,8 @@ export default function TeamManagement() {
         key={user.id}
         style={[
           styles.userCard,
-          isCurrentUser && styles.userCardHighlighted,
+          { backgroundColor: colors.background.card, borderColor: colors.border.light },
+          isCurrentUser && { borderColor: colors.primary.main, borderWidth: 2 },
         ]}
         onPress={() => {
           console.log("User selected:", user.name);
@@ -139,21 +129,21 @@ export default function TeamManagement() {
             {user.imageUrl ? (
               <Image source={{ uri: user.imageUrl }} style={styles.userAvatar} />
             ) : (
-              <View style={[styles.userAvatar, styles.avatarPlaceholder]}>
-                <Text style={styles.avatarText}>{user.name.charAt(0)}</Text>
+              <View style={[styles.userAvatar, styles.avatarPlaceholder, { backgroundColor: colors.primary.main }]}>
+                <Text style={[styles.avatarText, { color: colors.text.inverse }]}>{user.name.charAt(0)}</Text>
               </View>
             )}
             <View style={styles.userDetails}>
               <View style={styles.userNameRow}>
-                <Text style={styles.userName}>{user.name}</Text>
+                <Text style={[styles.userName, { color: colors.text.primary }]}>{user.name}</Text>
                 {isCurrentUser && (
-                  <View style={styles.youBadge}>
-                    <Text style={styles.youBadgeText}>You</Text>
+                  <View style={[styles.youBadge, { backgroundColor: colors.primary.main + "20" }]}>
+                    <Text style={[styles.youBadgeText, { color: colors.primary.main }]}>You</Text>
                   </View>
                 )}
               </View>
-              <Text style={styles.userEmail}>{user.email}</Text>
-              <View style={styles.roleBadge}>
+              <Text style={[styles.userEmail, { color: colors.text.secondary }]}>{user.email}</Text>
+              <View style={[styles.roleBadge, { backgroundColor: colors.neutral.gray50 }]}>
                 <Shield
                   color={ROLE_COLORS[user.role]}
                   size={12}
@@ -172,75 +162,111 @@ export default function TeamManagement() {
           </View>
         </View>
 
-        <View style={styles.statsRow}>
+        <View style={[styles.statsRow, { borderTopColor: colors.border.light }]}>
           <View style={styles.statItem}>
-            <Calendar color={Colors.text.secondary} size={16} />
-            <Text style={styles.statValue}>{stats.totalEvents}</Text>
-            <Text style={styles.statLabel}>Events</Text>
+            <Calendar color={colors.text.secondary} size={16} />
+            <Text style={[styles.statValue, { color: colors.text.primary }]}>{stats.totalEvents}</Text>
+            <Text style={[styles.statLabel, { color: colors.text.secondary }]}>Events</Text>
           </View>
           <View style={styles.statItem}>
-            <CheckCircle color={Colors.status.success} size={16} />
-            <Text style={styles.statValue}>{stats.attendingEvents}</Text>
-            <Text style={styles.statLabel}>Attending</Text>
+            <CheckCircle color={colors.status.success} size={16} />
+            <Text style={[styles.statValue, { color: colors.text.primary }]}>{stats.attendingEvents}</Text>
+            <Text style={[styles.statLabel, { color: colors.text.secondary }]}>Attending</Text>
           </View>
           <View style={styles.statItem}>
-            <Clock color={Colors.accent.amber} size={16} />
-            <Text style={styles.statValue}>{stats.pendingEvents}</Text>
-            <Text style={styles.statLabel}>Pending</Text>
+            <Clock color={colors.accent.amber} size={16} />
+            <Text style={[styles.statValue, { color: colors.text.primary }]}>{stats.pendingEvents}</Text>
+            <Text style={[styles.statLabel, { color: colors.text.secondary }]}>Pending</Text>
           </View>
           <View style={styles.statItem}>
-            <Activity color={Colors.primary.main} size={16} />
-            <Text style={styles.statValue}>{stats.attendanceRate}%</Text>
-            <Text style={styles.statLabel}>Rate</Text>
+            <Activity color={colors.primary.main} size={16} />
+            <Text style={[styles.statValue, { color: colors.text.primary }]}>{stats.attendanceRate}%</Text>
+            <Text style={[styles.statLabel, { color: colors.text.secondary }]}>Rate</Text>
           </View>
         </View>
       </TouchableOpacity>
     );
   };
 
+  if (!canAccessPage) {
+    return (
+      <>
+        <Stack.Screen options={{ headerShown: false }} />
+        <View style={[styles.container, { backgroundColor: colors.background.main }]}>
+          {!isMobile && <LeftNavigation />}
+          {isMobile && <MobileNavDrawer visible={drawerVisible} onClose={() => setDrawerVisible(false)} />}
+          <View style={[styles.content, isMobile && styles.contentMobile]}>
+            {isMobile && <MobileHeader title="Team Management" onMenuPress={() => setDrawerVisible(true)} />}
+            <View style={styles.accessDenied}>
+              <Text style={[styles.accessDeniedText, { color: colors.text.primary }]}>Access Denied</Text>
+              <Text style={[styles.accessDeniedSubtext, { color: colors.text.secondary }]}>
+                You do not have permission to access this page.
+              </Text>
+            </View>
+          </View>
+        </View>
+      </>
+    );
+  }
+
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <View style={[styles.container, { paddingTop: insets.top }]}>
-        <LeftNavigation />
-        <View style={styles.content}>
-          <View style={styles.header}>
-            <View>
-              <View style={styles.titleRow}>
-                <Users color={Colors.primary.main} size={28} />
-                <Text style={styles.title}>Team Management</Text>
+      <View style={[styles.container, { backgroundColor: colors.background.main }]}>
+        {!isMobile && <LeftNavigation />}
+        {isMobile && <MobileNavDrawer visible={drawerVisible} onClose={() => setDrawerVisible(false)} />}
+        <View style={[styles.content, isMobile && styles.contentMobile]}>
+          {isMobile ? (
+            <MobileHeader
+              title="Team Management"
+              onMenuPress={() => setDrawerVisible(true)}
+              rightButton={
+                canManageUsers ? (
+                  <TouchableOpacity onPress={() => console.log("Add user")}>
+                    <UserPlus color={colors.primary.main} size={24} />
+                  </TouchableOpacity>
+                ) : undefined
+              }
+            />
+          ) : (
+            <View style={[styles.header, { backgroundColor: colors.background.card, borderBottomColor: colors.border.light }]}>
+              <View>
+                <View style={styles.titleRow}>
+                  <Users color={colors.primary.main} size={28} />
+                  <Text style={[styles.title, { color: colors.text.primary }]}>Team Management</Text>
+                </View>
+                <Text style={[styles.subtitle, { color: colors.text.secondary }]}>
+                  Manage department staff and view team performance
+                </Text>
               </View>
-              <Text style={styles.subtitle}>
-                Manage department staff and view team performance
-              </Text>
+              {canManageUsers && (
+                <TouchableOpacity
+                  style={[styles.addButton, { backgroundColor: colors.primary.main }]}
+                  onPress={() => {
+                    console.log("Add user");
+                  }}
+                >
+                  <UserPlus color={colors.text.inverse} size={20} />
+                  <Text style={[styles.addButtonText, { color: colors.text.inverse }]}>Add User</Text>
+                </TouchableOpacity>
+              )}
             </View>
-            {canManageUsers && (
-              <TouchableOpacity
-                style={styles.addButton}
-                onPress={() => {
-                  console.log("Add user");
-                }}
-              >
-                <UserPlus color={Colors.text.inverse} size={20} />
-                <Text style={styles.addButtonText}>Add User</Text>
-              </TouchableOpacity>
-            )}
-          </View>
+          )}
 
-          <View style={styles.toolbar}>
-            <View style={styles.searchContainer}>
-              <Search color={Colors.text.secondary} size={18} />
+          <View style={[styles.toolbar, { backgroundColor: colors.background.card, borderBottomColor: colors.border.light }]}>
+            <View style={[styles.searchContainer, { backgroundColor: colors.neutral.gray50, borderColor: colors.border.light }]}>
+              <Search color={colors.text.secondary} size={18} />
               <TextInput
-                style={styles.searchInput}
+                style={[styles.searchInput, { color: colors.text.primary }]}
                 placeholder="Search by name, email, or department..."
-                placeholderTextColor={Colors.text.disabled}
+                placeholderTextColor={colors.text.disabled}
                 value={searchQuery}
                 onChangeText={setSearchQuery}
               />
             </View>
 
             <View style={styles.filterContainer}>
-              <Filter color={Colors.text.secondary} size={18} />
+              <Filter color={colors.text.secondary} size={18} />
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -249,14 +275,16 @@ export default function TeamManagement() {
                 <TouchableOpacity
                   style={[
                     styles.filterChip,
-                    selectedRole === "all" && styles.filterChipActive,
+                    { backgroundColor: colors.neutral.gray50, borderColor: colors.border.light },
+                    selectedRole === "all" && { backgroundColor: colors.primary.main, borderColor: colors.primary.main },
                   ]}
                   onPress={() => setSelectedRole("all")}
                 >
                   <Text
                     style={[
                       styles.filterChipText,
-                      selectedRole === "all" && styles.filterChipTextActive,
+                      { color: colors.text.secondary },
+                      selectedRole === "all" && { color: colors.text.inverse, fontWeight: "600" as const },
                     ]}
                   >
                     All ({allUsers.length})
@@ -269,14 +297,16 @@ export default function TeamManagement() {
                       key={role}
                       style={[
                         styles.filterChip,
-                        selectedRole === role && styles.filterChipActive,
+                        { backgroundColor: colors.neutral.gray50, borderColor: colors.border.light },
+                        selectedRole === role && { backgroundColor: colors.primary.main, borderColor: colors.primary.main },
                       ]}
                       onPress={() => setSelectedRole(role)}
                     >
                       <Text
                         style={[
                           styles.filterChipText,
-                          selectedRole === role && styles.filterChipTextActive,
+                          { color: colors.text.secondary },
+                          selectedRole === role && { color: colors.text.inverse, fontWeight: "600" as const },
                         ]}
                       >
                         {ROLE_LABELS[role]} ({count})
@@ -298,9 +328,9 @@ export default function TeamManagement() {
 
             {filteredUsers.length === 0 && (
               <View style={styles.emptyState}>
-                <Users color={Colors.text.disabled} size={64} />
-                <Text style={styles.emptyStateText}>No users found</Text>
-                <Text style={styles.emptyStateSubtext}>
+                <Users color={colors.text.disabled} size={64} />
+                <Text style={[styles.emptyStateText, { color: colors.text.secondary }]}>No users found</Text>
+                <Text style={[styles.emptyStateSubtext, { color: colors.text.disabled }]}>
                   Try adjusting your search or filters
                 </Text>
               </View>
@@ -316,7 +346,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     flexDirection: "row",
-    backgroundColor: Colors.background.main,
   },
   content: {
     flex: 1,
@@ -326,14 +355,15 @@ const styles = StyleSheet.create({
       },
     }),
   },
+  contentMobile: {
+    marginLeft: 0,
+  },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     padding: 24,
-    backgroundColor: Colors.background.card,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border.light,
   },
   titleRow: {
     flexDirection: "row",
@@ -343,32 +373,26 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: "700" as const,
-    color: Colors.text.primary,
   },
   subtitle: {
     fontSize: 14,
-    color: Colors.text.secondary,
     marginTop: 4,
   },
   addButton: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    backgroundColor: Colors.primary.main,
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 8,
   },
   addButtonText: {
-    color: Colors.text.inverse,
     fontSize: 14,
     fontWeight: "600" as const,
   },
   toolbar: {
     padding: 16,
-    backgroundColor: Colors.background.card,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border.light,
     gap: 12,
   },
   searchContainer: {
@@ -376,16 +400,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingHorizontal: 12,
     paddingVertical: 10,
-    backgroundColor: Colors.neutral.gray50,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: Colors.border.light,
   },
   searchInput: {
     flex: 1,
     marginLeft: 8,
     fontSize: 14,
-    color: Colors.text.primary,
     outlineStyle: "none" as any,
   },
   filterContainer: {
@@ -400,23 +421,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: Colors.neutral.gray50,
     borderWidth: 1,
-    borderColor: Colors.border.light,
     marginRight: 8,
-  },
-  filterChipActive: {
-    backgroundColor: Colors.primary.main,
-    borderColor: Colors.primary.main,
   },
   filterChipText: {
     fontSize: 13,
     fontWeight: "500" as const,
-    color: Colors.text.secondary,
-  },
-  filterChipTextActive: {
-    color: Colors.text.inverse,
-    fontWeight: "600" as const,
   },
   scrollView: {
     flex: 1,
@@ -430,15 +440,9 @@ const styles = StyleSheet.create({
   userCard: {
     flex: 1,
     minWidth: 300,
-    backgroundColor: Colors.background.card,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: Colors.border.light,
     padding: 20,
-  },
-  userCardHighlighted: {
-    borderColor: Colors.primary.main,
-    borderWidth: 2,
   },
   userCardHeader: {
     marginBottom: 16,
@@ -453,12 +457,10 @@ const styles = StyleSheet.create({
     borderRadius: 28,
   },
   avatarPlaceholder: {
-    backgroundColor: Colors.primary.main,
     alignItems: "center",
     justifyContent: "center",
   },
   avatarText: {
-    color: Colors.text.inverse,
     fontSize: 20,
     fontWeight: "600" as const,
   },
@@ -473,10 +475,8 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 16,
     fontWeight: "600" as const,
-    color: Colors.text.primary,
   },
   youBadge: {
-    backgroundColor: Colors.primary.main + "20",
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 4,
@@ -484,11 +484,9 @@ const styles = StyleSheet.create({
   youBadgeText: {
     fontSize: 11,
     fontWeight: "600" as const,
-    color: Colors.primary.main,
   },
   userEmail: {
     fontSize: 13,
-    color: Colors.text.secondary,
     marginTop: 2,
   },
   roleBadge: {
@@ -499,7 +497,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 6,
-    backgroundColor: Colors.neutral.gray50,
   },
   roleText: {
     fontSize: 12,
@@ -510,7 +507,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: Colors.border.light,
   },
   statItem: {
     alignItems: "center",
@@ -519,11 +515,9 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 16,
     fontWeight: "700" as const,
-    color: Colors.text.primary,
   },
   statLabel: {
     fontSize: 11,
-    color: Colors.text.secondary,
   },
   emptyState: {
     alignItems: "center",
@@ -532,12 +526,10 @@ const styles = StyleSheet.create({
   emptyStateText: {
     fontSize: 16,
     fontWeight: "600" as const,
-    color: Colors.text.secondary,
     marginTop: 16,
   },
   emptyStateSubtext: {
     fontSize: 14,
-    color: Colors.text.disabled,
     marginTop: 4,
   },
   accessDenied: {
@@ -549,12 +541,10 @@ const styles = StyleSheet.create({
   accessDeniedText: {
     fontSize: 24,
     fontWeight: "700" as const,
-    color: Colors.text.primary,
     marginBottom: 12,
   },
   accessDeniedSubtext: {
     fontSize: 16,
-    color: Colors.text.secondary,
     textAlign: "center",
   },
 });
