@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Platform,
+  useWindowDimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
@@ -20,10 +21,15 @@ import { useEvents } from "@/contexts/EventsContext";
 import { useAuth } from "@/contexts/AuthContext";
 import EventCard from "@/components/EventCard";
 import LeftNavigation from "@/components/LeftNavigation";
+import MobileHeader from "@/components/MobileHeader";
+import MobileNavDrawer from "@/components/MobileNavDrawer";
 import Colors from "@/constants/colors";
 
 export default function Dashboard() {
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const isMobile = width < 768;
+  const [drawerVisible, setDrawerVisible] = useState(false);
   const { upcomingEvents, unresolvedConflicts, conflictingEvents } = useEvents();
   const { currentUser } = useAuth();
 
@@ -39,10 +45,22 @@ export default function Dashboard() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <View style={[styles.container, { paddingTop: insets.top }]}>
-        <LeftNavigation />
-        <View style={styles.content}>
-          <View style={styles.header}>
+      <View style={styles.container}>
+        {!isMobile && <LeftNavigation />}
+        {isMobile && <MobileNavDrawer visible={drawerVisible} onClose={() => setDrawerVisible(false)} />}
+        <View style={[styles.content, isMobile && styles.contentMobile]}>
+          {isMobile ? (
+            <MobileHeader
+              title="Dashboard"
+              onMenuPress={() => setDrawerVisible(true)}
+              rightButton={
+                <TouchableOpacity onPress={() => router.push("/create-event" as any)}>
+                  <Plus color={Colors.primary.main} size={24} />
+                </TouchableOpacity>
+              }
+            />
+          ) : (
+            <View style={styles.header}>
             <View>
               <Text style={styles.greeting}>
                 Welcome back, {currentUser?.name.split(" ")[0]}
@@ -59,6 +77,7 @@ export default function Dashboard() {
               <Text style={styles.createButtonText}>Create Event</Text>
             </TouchableOpacity>
           </View>
+          )}
 
           <ScrollView
             style={styles.scrollView}
@@ -214,6 +233,9 @@ const styles = StyleSheet.create({
       },
     }),
   },
+  contentMobile: {
+    marginLeft: 0,
+  },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -222,6 +244,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background.card,
     borderBottomWidth: 1,
     borderBottomColor: Colors.border.light,
+    flexWrap: "wrap",
+    gap: 12,
   },
   greeting: {
     fontSize: 24,
@@ -253,13 +277,14 @@ const styles = StyleSheet.create({
   statsGrid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    padding: 16,
-    gap: 16,
+    padding: 12,
+    gap: 12,
   },
   statCard: {
     flex: 1,
     minWidth: 140,
-    padding: 20,
+    maxWidth: 200,
+    padding: 16,
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
@@ -277,7 +302,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
   },
   section: {
-    padding: 24,
+    padding: 16,
   },
   sectionHeader: {
     flexDirection: "row",

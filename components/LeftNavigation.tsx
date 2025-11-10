@@ -260,6 +260,7 @@ const styles = StyleSheet.create({
     borderRightWidth: 1,
     borderRightColor: Colors.border.light,
     flexDirection: "column",
+    display: Platform.OS === 'web' ? 'none' : 'flex',
     ...Platform.select({
       web: {
         position: "fixed" as any,
@@ -267,6 +268,9 @@ const styles = StyleSheet.create({
         top: 0,
         bottom: 0,
         zIndex: 1000,
+        '@media (min-width: 768px)': {
+          display: 'flex',
+        },
       },
     }),
   },
