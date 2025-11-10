@@ -274,16 +274,19 @@ export default function EventDetail() {
               <View style={styles.attendeesHeader}>
                 <Users color={colors.text.primary} size={20} />
                 <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
-                  Attendees ({event.responses.length})
+                  Attendees ({event.assignedTo.length})
                 </Text>
               </View>
               <View style={styles.attendeesList}>
-                {event.responses.map((response) => {
-                  const user = allUsers.find((u) => u.id === response.userId);
+                {event.assignedTo.map((userId) => {
+                  const user = allUsers.find((u) => u.id === userId);
                   if (!user) return null;
 
+                  const response = event.responses.find((r) => r.userId === userId);
+                  const status = response?.status || "pending";
+
                   return (
-                    <View key={response.userId} style={[styles.attendeeItem, { backgroundColor: colors.background.elevated }]}>
+                    <View key={userId} style={[styles.attendeeItem, { backgroundColor: colors.background.elevated }]}>
                       <View style={styles.attendeeInfo}>
                         <Text style={[styles.attendeeName, { color: colors.text.primary }]}>{user.name}</Text>
                         <Text style={[styles.attendeeRole, { color: colors.text.secondary }]}>{user.role}</Text>
@@ -293,11 +296,11 @@ export default function EventDetail() {
                           styles.statusBadge,
                           {
                             backgroundColor:
-                              response.status === "attending"
+                              status === "attending"
                                 ? Colors.response.attending + "20"
-                                : response.status === "not-attending"
+                                : status === "not-attending"
                                 ? Colors.response.notAttending + "20"
-                                : response.status === "maybe"
+                                : status === "maybe"
                                 ? Colors.response.maybe + "20"
                                 : Colors.response.pending + "20",
                           },
@@ -308,21 +311,21 @@ export default function EventDetail() {
                             styles.statusText,
                             {
                               color:
-                                response.status === "attending"
+                                status === "attending"
                                   ? Colors.response.attending
-                                  : response.status === "not-attending"
+                                  : status === "not-attending"
                                   ? Colors.response.notAttending
-                                  : response.status === "maybe"
+                                  : status === "maybe"
                                   ? Colors.response.maybe
                                   : Colors.response.pending,
                             },
                           ]}
                         >
-                          {response.status === "attending"
+                          {status === "attending"
                             ? "Attending"
-                            : response.status === "not-attending"
+                            : status === "not-attending"
                             ? "Not Attending"
-                            : response.status === "maybe"
+                            : status === "maybe"
                             ? "Maybe"
                             : "Pending"}
                         </Text>

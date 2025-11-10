@@ -122,6 +122,12 @@ export default function EditEvent() {
     const [endDay, endMonth, endYear] = endDate.split("-");
     const endDateTime = new Date(`${endYear}-${endMonth}-${endDay}T${endTime}`).toISOString();
 
+    console.log("[EditEvent] Saving event with:");
+    console.log("  - Title:", title);
+    console.log("  - Start:", startDateTime);
+    console.log("  - End:", endDateTime);
+    console.log("  - Attendees:", selectedUsers);
+
     const result = await updateEvent(event.id, {
       title,
       description,
@@ -135,10 +141,14 @@ export default function EditEvent() {
 
     setLoading(false);
 
+    console.log("[EditEvent] Update result:", result);
+
     if (!result.success && result.conflicts) {
+      console.log("[EditEvent] Conflicts detected, showing modal");
       setDetectedConflicts(result.conflicts);
       setConflictModal(true);
     } else {
+      console.log("[EditEvent] No conflicts, navigating back");
       router.back();
     }
   };

@@ -263,6 +263,15 @@ export const [EventsProvider, useEvents] = createContextHook(() => {
     
     const detectedConflicts = detectConflicts(updatedEvent, otherEvents);
 
+    console.log(`[EventsContext] Detected ${detectedConflicts.length} conflicts for event ${eventId}`);
+    if (detectedConflicts.length > 0) {
+      console.log("[EventsContext] Conflicts:", detectedConflicts.map(c => ({
+        severity: c.severity,
+        overlapDuration: c.overlapDuration,
+        affectedUsers: c.affectedUserIds
+      })));
+    }
+
     if (detectedConflicts.length > 0 && !proceedDespiteConflict) {
       return { success: false, conflicts: detectedConflicts };
     }
@@ -276,6 +285,8 @@ export const [EventsProvider, useEvents] = createContextHook(() => {
       const updatedConflicts = [...conflicts, ...detectedConflicts];
       setConflicts(updatedConflicts);
       await AsyncStorage.setItem("conflicts", JSON.stringify(updatedConflicts));
+
+      console.log("[EventsContext] Event updated with conflicts");
     } else {
       updatedEvent.hasConflict = false;
       updatedEvent.conflictIds = [];
@@ -285,6 +296,8 @@ export const [EventsProvider, useEvents] = createContextHook(() => {
       );
       setConflicts(updatedConflicts);
       await AsyncStorage.setItem("conflicts", JSON.stringify(updatedConflicts));
+
+      console.log("[EventsContext] Event updated with no conflicts");
     }
 
     const updatedEvents = events.map((event) =>
