@@ -9,6 +9,7 @@ import {
   Platform,
   Alert,
   Modal,
+  useWindowDimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
@@ -25,18 +26,24 @@ import {
 import { Stack } from "expo-router";
 import { useInvitations } from "@/contexts/InvitationsContext";
 import { useEvents } from "@/contexts/EventsContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import LeftNavigation from "@/components/LeftNavigation";
+import MobileHeader from "@/components/MobileHeader";
+import MobileNavDrawer from "@/components/MobileNavDrawer";
 import DateTimePicker from "@/components/DateTimePicker";
-import Colors from "@/constants/colors";
 import { Invitation } from "@/types";
 
 export default function Invitations() {
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const isMobile = width < 768;
   const { invitations, updateInvitationStatus, addInvitation } = useInvitations();
   const { addEvent } = useEvents();
+  const { colors } = useTheme();
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showScheduleModal, setShowScheduleModal] = useState(false);
   const [selectedInvitation, setSelectedInvitation] = useState<Invitation | null>(null);
+  const [drawerVisible, setDrawerVisible] = useState(false);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -142,32 +149,33 @@ export default function Invitations() {
         key={invitation.id}
         style={[
           styles.invitationCard,
-          invitation.hasConflict && styles.invitationCardConflict,
+          { backgroundColor: colors.background.card, borderColor: colors.border.light },
+          invitation.hasConflict && { borderColor: colors.status.warning, borderWidth: 2 },
         ]}
       >
         {invitation.hasConflict && (
-          <View style={styles.conflictBanner}>
-            <AlertTriangle color={Colors.text.inverse} size={16} />
-            <Text style={styles.conflictBannerText}>
+          <View style={[styles.conflictBanner, { backgroundColor: colors.status.warning }]}>
+            <AlertTriangle color={colors.text.inverse} size={16} />
+            <Text style={[styles.conflictBannerText, { color: colors.text.inverse }]}>
               Date conflicts with existing event
             </Text>
           </View>
         )}
 
         <View style={styles.invitationHeader}>
-          <Mail color={Colors.primary.main} size={24} />
+          <Mail color={colors.primary.main} size={24} />
           <View style={styles.invitationHeaderText}>
-            <Text style={styles.invitationTitle}>{invitation.title}</Text>
-            <Text style={styles.invitationOrganizer}>From: {invitation.organizer}</Text>
+            <Text style={[styles.invitationTitle, { color: colors.text.primary }]}>{invitation.title}</Text>
+            <Text style={[styles.invitationOrganizer, { color: colors.text.secondary }]}>From: {invitation.organizer}</Text>
           </View>
         </View>
 
-        <Text style={styles.invitationDescription}>{invitation.description}</Text>
+        <Text style={[styles.invitationDescription, { color: colors.text.secondary }]}>{invitation.description}</Text>
 
         <View style={styles.invitationDetails}>
           <View style={styles.detailRow}>
-            <CalendarIcon color={Colors.text.secondary} size={16} />
-            <Text style={styles.detailText}>
+            <CalendarIcon color={colors.text.secondary} size={16} />
+            <Text style={[styles.detailText, { color: colors.text.secondary }]}>
               {new Date(`${invitation.eventDate}T${invitation.eventTime}`).toLocaleDateString("en-US", {
                 month: "long",
                 day: "numeric",
@@ -177,43 +185,43 @@ export default function Invitations() {
             </Text>
           </View>
           <View style={styles.detailRow}>
-            <MapPin color={Colors.text.secondary} size={16} />
-            <Text style={styles.detailText}>{invitation.location}</Text>
+            <MapPin color={colors.text.secondary} size={16} />
+            <Text style={[styles.detailText, { color: colors.text.secondary }]}>{invitation.location}</Text>
           </View>
         </View>
 
         {isPending && (
           <View style={styles.invitationActions}>
             <TouchableOpacity
-              style={[styles.actionButton, styles.declineButton]}
+              style={[styles.actionButton, styles.declineButton, { backgroundColor: colors.neutral.gray100, borderColor: colors.status.error }]}
               onPress={() => handleDecline(invitation)}
             >
-              <X color={Colors.status.error} size={18} />
-              <Text style={styles.declineButtonText}>Decline</Text>
+              <X color={colors.status.error} size={18} />
+              <Text style={[styles.declineButtonText, { color: colors.status.error }]}>Decline</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.actionButton, styles.acceptButton]}
+              style={[styles.actionButton, styles.acceptButton, { backgroundColor: colors.status.success }]}
               onPress={() => handleAccept(invitation)}
             >
-              <Check color={Colors.text.inverse} size={18} />
-              <Text style={styles.acceptButtonText}>Accept</Text>
+              <Check color={colors.text.inverse} size={18} />
+              <Text style={[styles.acceptButtonText, { color: colors.text.inverse }]}>Accept</Text>
             </TouchableOpacity>
           </View>
         )}
 
         {isAccepted && (
           <TouchableOpacity
-            style={styles.scheduleButton}
+            style={[styles.scheduleButton, { backgroundColor: colors.primary.main }]}
             onPress={() => handleScheduleEvent(invitation)}
           >
-            <CalendarIcon color={Colors.text.inverse} size={18} />
-            <Text style={styles.scheduleButtonText}>Schedule Event</Text>
+            <CalendarIcon color={colors.text.inverse} size={18} />
+            <Text style={[styles.scheduleButtonText, { color: colors.text.inverse }]}>Schedule Event</Text>
           </TouchableOpacity>
         )}
 
         {invitation.status === "declined" && (
-          <View style={styles.statusBadge}>
-            <Text style={styles.statusBadgeText}>Declined</Text>
+          <View style={[styles.statusBadge, { backgroundColor: colors.neutral.gray100 }]}>
+            <Text style={[styles.statusBadgeText, { color: colors.text.secondary }]}>Declined</Text>
           </View>
         )}
       </View>
@@ -223,32 +231,53 @@ export default function Invitations() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <View style={[styles.container, { paddingTop: insets.top }]}>
-        <LeftNavigation />
-        <View style={styles.content}>
-          <View style={styles.header}>
-            <View>
-              <Text style={styles.greeting}>Invitations</Text>
-              <Text style={styles.subtitle}>Manage all department invitations</Text>
+      <View style={[styles.container, { paddingTop: isMobile ? 0 : insets.top, backgroundColor: colors.background.main }]}>
+        {!isMobile && <LeftNavigation />}
+        {isMobile && (
+          <MobileNavDrawer
+            visible={drawerVisible}
+            onClose={() => setDrawerVisible(false)}
+          />
+        )}
+        <View style={[styles.content, isMobile && styles.contentMobile]}>
+          {isMobile && (
+            <MobileHeader
+              title="Invitations"
+              onMenuPress={() => setDrawerVisible(true)}
+              rightButton={
+                <TouchableOpacity onPress={() => setShowCreateModal(true)}>
+                  <Plus color={colors.primary.main} size={24} />
+                </TouchableOpacity>
+              }
+            />
+          )}
+          
+          {!isMobile && (
+            <View style={[styles.header, { backgroundColor: colors.background.card, borderBottomColor: colors.border.light }]}>
+              <View>
+                <Text style={[styles.greeting, { color: colors.text.primary }]}>Invitations</Text>
+                <Text style={[styles.subtitle, { color: colors.text.secondary }]}>Manage all department invitations</Text>
+              </View>
+              <TouchableOpacity
+                style={[styles.createButton, { backgroundColor: colors.primary.main }]}
+                onPress={() => setShowCreateModal(true)}
+              >
+                <Plus color={colors.text.inverse} size={20} />
+                <Text style={[styles.createButtonText, { color: colors.text.inverse }]}>Add Invitation</Text>
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity
-              style={styles.createButton}
-              onPress={() => setShowCreateModal(true)}
-            >
-              <Plus color={Colors.text.inverse} size={20} />
-              <Text style={styles.createButtonText}>Add Invitation</Text>
-            </TouchableOpacity>
-          </View>
+          )}
 
           <ScrollView
             style={styles.scrollView}
             showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
           >
             {pendingInvitations.length > 0 && (
-              <View style={styles.section}>
+              <View style={[styles.section, isMobile && styles.sectionMobile]}>
                 <View style={styles.sectionHeader}>
-                  <Mail color={Colors.accent.amber} size={20} />
-                  <Text style={styles.sectionTitle}>
+                  <Mail color={colors.accent.amber} size={20} />
+                  <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
                     Pending ({pendingInvitations.length})
                   </Text>
                 </View>
@@ -259,10 +288,10 @@ export default function Invitations() {
             )}
 
             {acceptedInvitations.length > 0 && (
-              <View style={styles.section}>
+              <View style={[styles.section, isMobile && styles.sectionMobile]}>
                 <View style={styles.sectionHeader}>
-                  <Check color={Colors.status.success} size={20} />
-                  <Text style={styles.sectionTitle}>
+                  <Check color={colors.status.success} size={20} />
+                  <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
                     Accepted ({acceptedInvitations.length})
                   </Text>
                 </View>
@@ -273,10 +302,10 @@ export default function Invitations() {
             )}
 
             {declinedInvitations.length > 0 && (
-              <View style={styles.section}>
+              <View style={[styles.section, isMobile && styles.sectionMobile]}>
                 <View style={styles.sectionHeader}>
-                  <X color={Colors.text.disabled} size={20} />
-                  <Text style={styles.sectionTitle}>
+                  <X color={colors.text.disabled} size={20} />
+                  <Text style={[styles.sectionTitle, { color: colors.text.primary }]}>
                     Declined ({declinedInvitations.length})
                   </Text>
                 </View>
@@ -288,9 +317,9 @@ export default function Invitations() {
 
             {invitations.length === 0 && (
               <View style={styles.emptyState}>
-                <Mail color={Colors.text.disabled} size={64} />
-                <Text style={styles.emptyStateText}>No invitations</Text>
-                <Text style={styles.emptyStateSubtext}>
+                <Mail color={colors.text.disabled} size={64} />
+                <Text style={[styles.emptyStateText, { color: colors.text.secondary }]}>No invitations</Text>
+                <Text style={[styles.emptyStateSubtext, { color: colors.text.disabled }]}>
                   Create an invitation to get started
                 </Text>
               </View>
@@ -306,32 +335,32 @@ export default function Invitations() {
         onRequestClose={() => setShowCreateModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, Platform.OS === "web" && { maxWidth: 500 }]}>
+          <View style={[styles.modalContent, { backgroundColor: colors.background.card }, Platform.OS === "web" && { maxWidth: 500 }]}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Create Invitation</Text>
+              <Text style={[styles.modalTitle, { color: colors.text.primary }]}>Create Invitation</Text>
               <TouchableOpacity onPress={() => setShowCreateModal(false)}>
-                <X color={Colors.text.primary} size={24} />
+                <X color={colors.text.primary} size={24} />
               </TouchableOpacity>
             </View>
 
             <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
               <View style={styles.inputSection}>
-                <Text style={styles.inputLabel}>Title *</Text>
+                <Text style={[styles.inputLabel, { color: colors.text.primary }]}>Title *</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: colors.neutral.gray50, borderColor: colors.border.light, color: colors.text.primary }]}
                   placeholder="Event title"
-                  placeholderTextColor={Colors.text.disabled}
+                  placeholderTextColor={colors.text.disabled}
                   value={title}
                   onChangeText={setTitle}
                 />
               </View>
 
               <View style={styles.inputSection}>
-                <Text style={styles.inputLabel}>Description</Text>
+                <Text style={[styles.inputLabel, { color: colors.text.primary }]}>Description</Text>
                 <TextInput
-                  style={[styles.input, styles.textArea]}
+                  style={[styles.input, styles.textArea, { backgroundColor: colors.neutral.gray50, borderColor: colors.border.light, color: colors.text.primary }]}
                   placeholder="Event description"
-                  placeholderTextColor={Colors.text.disabled}
+                  placeholderTextColor={colors.text.disabled}
                   value={description}
                   onChangeText={setDescription}
                   multiline
@@ -358,31 +387,31 @@ export default function Invitations() {
               </View>
 
               <View style={styles.inputSection}>
-                <Text style={styles.inputLabel}>Location *</Text>
+                <Text style={[styles.inputLabel, { color: colors.text.primary }]}>Location *</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: colors.neutral.gray50, borderColor: colors.border.light, color: colors.text.primary }]}
                   placeholder="Event location"
-                  placeholderTextColor={Colors.text.disabled}
+                  placeholderTextColor={colors.text.disabled}
                   value={location}
                   onChangeText={setLocation}
                 />
               </View>
 
               <View style={styles.inputSection}>
-                <Text style={styles.inputLabel}>Organizer *</Text>
+                <Text style={[styles.inputLabel, { color: colors.text.primary }]}>Organizer *</Text>
                 <TextInput
-                  style={styles.input}
+                  style={[styles.input, { backgroundColor: colors.neutral.gray50, borderColor: colors.border.light, color: colors.text.primary }]}
                   placeholder="Organizer name"
-                  placeholderTextColor={Colors.text.disabled}
+                  placeholderTextColor={colors.text.disabled}
                   value={organizer}
                   onChangeText={setOrganizer}
                 />
               </View>
 
               <View style={styles.inputSection}>
-                <Text style={styles.inputLabel}>Invitation Letter</Text>
+                <Text style={[styles.inputLabel, { color: colors.text.primary }]}>Invitation Letter</Text>
                 <TouchableOpacity
-                  style={styles.uploadButton}
+                  style={[styles.uploadButton, { backgroundColor: colors.neutral.gray50, borderColor: colors.border.light }]}
                   onPress={() => {
                     if (Platform.OS === "web") {
                       const input = document.createElement("input");
@@ -407,13 +436,13 @@ export default function Invitations() {
                 >
                   {documentName ? (
                     <View style={styles.uploadedFile}>
-                      <FileText color={Colors.primary.main} size={20} />
-                      <Text style={styles.uploadedFileName}>{documentName}</Text>
+                      <FileText color={colors.primary.main} size={20} />
+                      <Text style={[styles.uploadedFileName, { color: colors.text.primary }]}>{documentName}</Text>
                     </View>
                   ) : (
                     <View style={styles.uploadContent}>
-                      <Upload color={Colors.text.secondary} size={20} />
-                      <Text style={styles.uploadText}>Upload invitation letter</Text>
+                      <Upload color={colors.text.secondary} size={20} />
+                      <Text style={[styles.uploadText, { color: colors.text.secondary }]}>Upload invitation letter</Text>
                     </View>
                   )}
                 </TouchableOpacity>
@@ -422,16 +451,16 @@ export default function Invitations() {
 
             <View style={styles.modalActions}>
               <TouchableOpacity
-                style={styles.modalCancelButton}
+                style={[styles.modalCancelButton, { backgroundColor: colors.neutral.gray100 }]}
                 onPress={() => setShowCreateModal(false)}
               >
-                <Text style={styles.modalCancelText}>Cancel</Text>
+                <Text style={[styles.modalCancelText, { color: colors.text.secondary }]}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.modalSaveButton}
+                style={[styles.modalSaveButton, { backgroundColor: colors.primary.main }]}
                 onPress={handleCreateInvitation}
               >
-                <Text style={styles.modalSaveText}>Create</Text>
+                <Text style={[styles.modalSaveText, { color: colors.text.inverse }]}>Create</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -445,22 +474,22 @@ export default function Invitations() {
         onRequestClose={() => setShowScheduleModal(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, Platform.OS === "web" && { maxWidth: 400 }]}>
+          <View style={[styles.modalContent, { backgroundColor: colors.background.card }, Platform.OS === "web" && { maxWidth: 400 }]}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Schedule Event</Text>
+              <Text style={[styles.modalTitle, { color: colors.text.primary }]}>Schedule Event</Text>
               <TouchableOpacity onPress={() => setShowScheduleModal(false)}>
-                <X color={Colors.text.primary} size={24} />
+                <X color={colors.text.primary} size={24} />
               </TouchableOpacity>
             </View>
 
-            <Text style={styles.modalDescription}>
+            <Text style={[styles.modalDescription, { color: colors.text.secondary }]}>
               Add this invitation to your calendar as an event?
             </Text>
 
             {selectedInvitation?.hasConflict && (
-              <View style={styles.conflictWarning}>
-                <AlertTriangle color={Colors.status.warning} size={20} />
-                <Text style={styles.conflictWarningText}>
+              <View style={[styles.conflictWarning, { backgroundColor: colors.status.warning + "20" }]}>
+                <AlertTriangle color={colors.status.warning} size={20} />
+                <Text style={[styles.conflictWarningText, { color: colors.status.warning }]}>
                   This event conflicts with existing events on your calendar
                 </Text>
               </View>
@@ -468,16 +497,16 @@ export default function Invitations() {
 
             <View style={styles.modalActions}>
               <TouchableOpacity
-                style={styles.modalCancelButton}
+                style={[styles.modalCancelButton, { backgroundColor: colors.neutral.gray100 }]}
                 onPress={() => setShowScheduleModal(false)}
               >
-                <Text style={styles.modalCancelText}>Cancel</Text>
+                <Text style={[styles.modalCancelText, { color: colors.text.secondary }]}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.modalSaveButton}
+                style={[styles.modalSaveButton, { backgroundColor: colors.primary.main }]}
                 onPress={confirmScheduleEvent}
               >
-                <Text style={styles.modalSaveText}>Confirm</Text>
+                <Text style={[styles.modalSaveText, { color: colors.text.inverse }]}>Confirm</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -491,7 +520,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     flexDirection: "row",
-    backgroundColor: Colors.background.main,
   },
   content: {
     flex: 1,
@@ -501,44 +529,47 @@ const styles = StyleSheet.create({
       },
     }),
   },
+  contentMobile: {
+    marginLeft: 0,
+  },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     padding: 24,
-    backgroundColor: Colors.background.card,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border.light,
   },
   greeting: {
     fontSize: 24,
     fontWeight: "700" as const,
-    color: Colors.text.primary,
   },
   subtitle: {
     fontSize: 14,
-    color: Colors.text.secondary,
     marginTop: 4,
   },
   createButton: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    backgroundColor: Colors.primary.main,
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 8,
   },
   createButtonText: {
-    color: Colors.text.inverse,
     fontSize: 14,
     fontWeight: "600" as const,
   },
   scrollView: {
     flex: 1,
   },
+  scrollContent: {
+    flexGrow: 1,
+  },
   section: {
     padding: 24,
+  },
+  sectionMobile: {
+    padding: 16,
   },
   sectionHeader: {
     flexDirection: "row",
@@ -549,27 +580,19 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: "600" as const,
-    color: Colors.text.primary,
   },
   invitationsList: {
     gap: 16,
   },
   invitationCard: {
-    backgroundColor: Colors.background.card,
     borderRadius: 12,
     padding: 20,
     borderWidth: 1,
-    borderColor: Colors.border.light,
-  },
-  invitationCardConflict: {
-    borderColor: Colors.status.warning,
-    borderWidth: 2,
   },
   conflictBanner: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    backgroundColor: Colors.status.warning,
     padding: 8,
     borderRadius: 8,
     marginBottom: 12,
@@ -577,7 +600,6 @@ const styles = StyleSheet.create({
   conflictBannerText: {
     fontSize: 12,
     fontWeight: "600" as const,
-    color: Colors.text.inverse,
   },
   invitationHeader: {
     flexDirection: "row",
@@ -591,16 +613,13 @@ const styles = StyleSheet.create({
   invitationTitle: {
     fontSize: 16,
     fontWeight: "700" as const,
-    color: Colors.text.primary,
   },
   invitationOrganizer: {
     fontSize: 12,
-    color: Colors.text.secondary,
     marginTop: 4,
   },
   invitationDescription: {
     fontSize: 14,
-    color: Colors.text.secondary,
     marginBottom: 12,
     lineHeight: 20,
   },
@@ -615,7 +634,6 @@ const styles = StyleSheet.create({
   },
   detailText: {
     fontSize: 13,
-    color: Colors.text.secondary,
   },
   invitationActions: {
     flexDirection: "row",
@@ -630,41 +648,32 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 8,
   },
-  acceptButton: {
-    backgroundColor: Colors.status.success,
-  },
+  acceptButton: {},
   acceptButtonText: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: Colors.text.inverse,
   },
   declineButton: {
-    backgroundColor: Colors.neutral.gray100,
     borderWidth: 1,
-    borderColor: Colors.status.error,
   },
   declineButtonText: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: Colors.status.error,
   },
   scheduleButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
     gap: 8,
-    backgroundColor: Colors.primary.main,
     paddingVertical: 12,
     borderRadius: 8,
   },
   scheduleButtonText: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: Colors.text.inverse,
   },
   statusBadge: {
     alignSelf: "flex-start",
-    backgroundColor: Colors.neutral.gray100,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 12,
@@ -672,7 +681,6 @@ const styles = StyleSheet.create({
   statusBadgeText: {
     fontSize: 12,
     fontWeight: "600" as const,
-    color: Colors.text.secondary,
   },
   emptyState: {
     alignItems: "center",
@@ -681,12 +689,10 @@ const styles = StyleSheet.create({
   emptyStateText: {
     fontSize: 18,
     fontWeight: "600" as const,
-    color: Colors.text.secondary,
     marginTop: 16,
   },
   emptyStateSubtext: {
     fontSize: 14,
-    color: Colors.text.disabled,
     marginTop: 8,
   },
   modalOverlay: {
@@ -698,7 +704,6 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     width: "100%",
-    backgroundColor: Colors.background.card,
     borderRadius: 16,
     padding: 24,
     maxHeight: "90%",
@@ -712,11 +717,9 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: "700" as const,
-    color: Colors.text.primary,
   },
   modalDescription: {
     fontSize: 14,
-    color: Colors.text.secondary,
     marginBottom: 20,
     lineHeight: 20,
   },
@@ -729,18 +732,14 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: Colors.text.primary,
     marginBottom: 8,
   },
   input: {
-    backgroundColor: Colors.neutral.gray50,
     borderWidth: 1,
-    borderColor: Colors.border.light,
     borderRadius: 8,
     paddingHorizontal: 16,
     paddingVertical: 12,
     fontSize: 14,
-    color: Colors.text.primary,
     outlineStyle: "none" as any,
   },
   textArea: {
@@ -751,7 +750,6 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    backgroundColor: Colors.status.warning + "20",
     padding: 12,
     borderRadius: 8,
     marginBottom: 20,
@@ -759,7 +757,6 @@ const styles = StyleSheet.create({
   conflictWarningText: {
     flex: 1,
     fontSize: 13,
-    color: Colors.status.warning,
     fontWeight: "600" as const,
   },
   modalActions: {
@@ -770,30 +767,24 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     borderRadius: 8,
-    backgroundColor: Colors.neutral.gray100,
     alignItems: "center",
   },
   modalCancelText: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: Colors.text.secondary,
   },
   modalSaveButton: {
     flex: 1,
     paddingVertical: 12,
     borderRadius: 8,
-    backgroundColor: Colors.primary.main,
     alignItems: "center",
   },
   modalSaveText: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: Colors.text.inverse,
   },
   uploadButton: {
-    backgroundColor: Colors.neutral.gray50,
     borderWidth: 2,
-    borderColor: Colors.border.light,
     borderStyle: "dashed",
     borderRadius: 8,
     paddingVertical: 20,
@@ -807,7 +798,6 @@ const styles = StyleSheet.create({
   },
   uploadText: {
     fontSize: 14,
-    color: Colors.text.secondary,
   },
   uploadedFile: {
     flexDirection: "row",
@@ -816,7 +806,6 @@ const styles = StyleSheet.create({
   },
   uploadedFileName: {
     fontSize: 14,
-    color: Colors.text.primary,
     fontWeight: "600" as const,
   },
 });

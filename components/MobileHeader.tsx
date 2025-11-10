@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Menu, Bell } from "lucide-react-native";
-import Colors from "@/constants/colors";
+import { useTheme } from "@/contexts/ThemeContext";
 
 interface MobileHeaderProps {
   title: string;
@@ -18,14 +18,15 @@ interface MobileHeaderProps {
 
 export default function MobileHeader({ title, onMenuPress, rightButton }: MobileHeaderProps) {
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
 
   return (
-    <View style={[styles.container, { paddingTop: insets.top + 12 }]}>
+    <View style={[styles.container, { paddingTop: insets.top + 12, backgroundColor: colors.background.card, borderBottomColor: colors.border.light }]}>
       <TouchableOpacity style={styles.menuButton} onPress={onMenuPress}>
-        <Menu color={Colors.text.primary} size={24} />
+        <Menu color={colors.text.primary} size={24} />
       </TouchableOpacity>
       
-      <Text style={styles.title}>{title}</Text>
+      <Text style={[styles.title, { color: colors.text.primary }]}>{title}</Text>
       
       <View style={styles.rightContainer}>
         {rightButton}
@@ -36,9 +37,7 @@ export default function MobileHeader({ title, onMenuPress, rightButton }: Mobile
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: Colors.background.card,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border.light,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
@@ -51,7 +50,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: "700" as const,
-    color: Colors.text.primary,
     flex: 1,
     textAlign: "center",
     marginHorizontal: 8,

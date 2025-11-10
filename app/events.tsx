@@ -6,14 +6,17 @@ import {
   ScrollView,
   TouchableOpacity,
   Platform,
+  useWindowDimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Plus, Calendar as CalendarIcon, Filter } from "lucide-react-native";
 import { router, Stack } from "expo-router";
 import { useEvents } from "@/contexts/EventsContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import EventCard from "@/components/EventCard";
 import LeftNavigation from "@/components/LeftNavigation";
-import Colors from "@/constants/colors";
+import MobileHeader from "@/components/MobileHeader";
+import MobileNavDrawer from "@/components/MobileNavDrawer";
 import { EventPriority } from "@/types";
 
 type SortOption = "date" | "priority" | "title";
@@ -21,10 +24,14 @@ type FilterOption = "all" | "upcoming" | "past" | "conflicted";
 
 export default function Events() {
   const insets = useSafeAreaInsets();
+  const { width } = useWindowDimensions();
+  const isMobile = width < 768;
   const { events } = useEvents();
+  const { colors } = useTheme();
   const [sortBy, setSortBy] = useState<SortOption>("date");
   const [filter, setFilter] = useState<FilterOption>("all");
   const [showFilters, setShowFilters] = useState(false);
+  const [drawerVisible, setDrawerVisible] = useState(false);
 
   const filteredAndSortedEvents = useMemo(() => {
     let filtered = [...events];
@@ -70,47 +77,71 @@ export default function Events() {
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
-      <View style={[styles.container, { paddingTop: insets.top }]}>
-        <LeftNavigation />
-        <View style={styles.content}>
-          <View style={styles.header}>
-            <View>
-              <Text style={styles.greeting}>All Events</Text>
-              <Text style={styles.subtitle}>
-                {filteredAndSortedEvents.length} event{filteredAndSortedEvents.length !== 1 ? "s" : ""} found
-              </Text>
+      <View style={[styles.container, { paddingTop: isMobile ? 0 : insets.top, backgroundColor: colors.background.main }]}>
+        {!isMobile && <LeftNavigation />}
+        {isMobile && (
+          <MobileNavDrawer
+            visible={drawerVisible}
+            onClose={() => setDrawerVisible(false)}
+          />
+        )}
+        <View style={[styles.content, isMobile && styles.contentMobile]}>
+          {isMobile && (
+            <MobileHeader
+              title="All Events"
+              onMenuPress={() => setDrawerVisible(true)}
+              rightButton={
+                <TouchableOpacity
+                  onPress={() => router.push("/create-event" as any)}
+                >
+                  <Plus color={colors.primary.main} size={24} />
+                </TouchableOpacity>
+              }
+            />
+          )}
+          
+          {!isMobile && (
+            <View style={[styles.header, { backgroundColor: colors.background.card, borderBottomColor: colors.border.light }]}>
+              <View>
+                <Text style={[styles.greeting, { color: colors.text.primary }]}>All Events</Text>
+                <Text style={[styles.subtitle, { color: colors.text.secondary }]}>
+                  {filteredAndSortedEvents.length} event{filteredAndSortedEvents.length !== 1 ? "s" : ""} found
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={[styles.createButton, { backgroundColor: colors.primary.main }]}
+                onPress={() => router.push("/create-event" as any)}
+              >
+                <Plus color={colors.text.inverse} size={20} />
+                <Text style={[styles.createButtonText, { color: colors.text.inverse }]}>Create Event</Text>
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity
-              style={styles.createButton}
-              onPress={() => router.push("/create-event" as any)}
-            >
-              <Plus color={Colors.text.inverse} size={20} />
-              <Text style={styles.createButtonText}>Create Event</Text>
-            </TouchableOpacity>
-          </View>
+          )}
 
-          <View style={styles.controls}>
+          <View style={[styles.controls, { backgroundColor: colors.background.card, borderBottomColor: colors.border.light }]}>
             <View style={styles.filterRow}>
               <TouchableOpacity
-                style={styles.filterButton}
+                style={[styles.filterButton, { borderColor: colors.primary.main }]}
                 onPress={() => setShowFilters(!showFilters)}
               >
-                <Filter color={Colors.primary.main} size={18} />
-                <Text style={styles.filterButtonText}>Filters</Text>
+                <Filter color={colors.primary.main} size={18} />
+                <Text style={[styles.filterButtonText, { color: colors.primary.main }]}>Filters</Text>
               </TouchableOpacity>
 
               <View style={styles.sortButtons}>
                 <TouchableOpacity
                   style={[
                     styles.sortButton,
-                    sortBy === "date" && styles.sortButtonActive,
+                    { backgroundColor: colors.neutral.gray100 },
+                    sortBy === "date" && { backgroundColor: colors.primary.main },
                   ]}
                   onPress={() => setSortBy("date")}
                 >
                   <Text
                     style={[
                       styles.sortButtonText,
-                      sortBy === "date" && styles.sortButtonTextActive,
+                      { color: colors.text.secondary },
+                      sortBy === "date" && { color: colors.text.inverse },
                     ]}
                   >
                     Date
@@ -119,14 +150,16 @@ export default function Events() {
                 <TouchableOpacity
                   style={[
                     styles.sortButton,
-                    sortBy === "priority" && styles.sortButtonActive,
+                    { backgroundColor: colors.neutral.gray100 },
+                    sortBy === "priority" && { backgroundColor: colors.primary.main },
                   ]}
                   onPress={() => setSortBy("priority")}
                 >
                   <Text
                     style={[
                       styles.sortButtonText,
-                      sortBy === "priority" && styles.sortButtonTextActive,
+                      { color: colors.text.secondary },
+                      sortBy === "priority" && { color: colors.text.inverse },
                     ]}
                   >
                     Priority
@@ -135,14 +168,16 @@ export default function Events() {
                 <TouchableOpacity
                   style={[
                     styles.sortButton,
-                    sortBy === "title" && styles.sortButtonActive,
+                    { backgroundColor: colors.neutral.gray100 },
+                    sortBy === "title" && { backgroundColor: colors.primary.main },
                   ]}
                   onPress={() => setSortBy("title")}
                 >
                   <Text
                     style={[
                       styles.sortButtonText,
-                      sortBy === "title" && styles.sortButtonTextActive,
+                      { color: colors.text.secondary },
+                      sortBy === "title" && { color: colors.text.inverse },
                     ]}
                   >
                     Title
@@ -156,14 +191,16 @@ export default function Events() {
                 <TouchableOpacity
                   style={[
                     styles.filterOption,
-                    filter === "all" && styles.filterOptionActive,
+                    { backgroundColor: colors.neutral.gray50, borderColor: colors.border.light },
+                    filter === "all" && { backgroundColor: colors.primary.main + "20", borderColor: colors.primary.main },
                   ]}
                   onPress={() => setFilter("all")}
                 >
                   <Text
                     style={[
                       styles.filterOptionText,
-                      filter === "all" && styles.filterOptionTextActive,
+                      { color: colors.text.secondary },
+                      filter === "all" && { color: colors.primary.main },
                     ]}
                   >
                     All Events
@@ -172,14 +209,16 @@ export default function Events() {
                 <TouchableOpacity
                   style={[
                     styles.filterOption,
-                    filter === "upcoming" && styles.filterOptionActive,
+                    { backgroundColor: colors.neutral.gray50, borderColor: colors.border.light },
+                    filter === "upcoming" && { backgroundColor: colors.primary.main + "20", borderColor: colors.primary.main },
                   ]}
                   onPress={() => setFilter("upcoming")}
                 >
                   <Text
                     style={[
                       styles.filterOptionText,
-                      filter === "upcoming" && styles.filterOptionTextActive,
+                      { color: colors.text.secondary },
+                      filter === "upcoming" && { color: colors.primary.main },
                     ]}
                   >
                     Upcoming
@@ -188,14 +227,16 @@ export default function Events() {
                 <TouchableOpacity
                   style={[
                     styles.filterOption,
-                    filter === "past" && styles.filterOptionActive,
+                    { backgroundColor: colors.neutral.gray50, borderColor: colors.border.light },
+                    filter === "past" && { backgroundColor: colors.primary.main + "20", borderColor: colors.primary.main },
                   ]}
                   onPress={() => setFilter("past")}
                 >
                   <Text
                     style={[
                       styles.filterOptionText,
-                      filter === "past" && styles.filterOptionTextActive,
+                      { color: colors.text.secondary },
+                      filter === "past" && { color: colors.primary.main },
                     ]}
                   >
                     Past
@@ -204,14 +245,16 @@ export default function Events() {
                 <TouchableOpacity
                   style={[
                     styles.filterOption,
-                    filter === "conflicted" && styles.filterOptionActive,
+                    { backgroundColor: colors.neutral.gray50, borderColor: colors.border.light },
+                    filter === "conflicted" && { backgroundColor: colors.primary.main + "20", borderColor: colors.primary.main },
                   ]}
                   onPress={() => setFilter("conflicted")}
                 >
                   <Text
                     style={[
                       styles.filterOptionText,
-                      filter === "conflicted" && styles.filterOptionTextActive,
+                      { color: colors.text.secondary },
+                      filter === "conflicted" && { color: colors.primary.main },
                     ]}
                   >
                     Conflicted
@@ -224,8 +267,9 @@ export default function Events() {
           <ScrollView
             style={styles.scrollView}
             showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.scrollContent}
           >
-            <View style={styles.eventsList}>
+            <View style={[styles.eventsList, isMobile && styles.eventsListMobile]}>
               {filteredAndSortedEvents.map((event) => (
                 <EventCard
                   key={event.id}
@@ -236,9 +280,9 @@ export default function Events() {
             </View>
             {filteredAndSortedEvents.length === 0 && (
               <View style={styles.emptyState}>
-                <CalendarIcon color={Colors.text.disabled} size={48} />
-                <Text style={styles.emptyStateText}>No events found</Text>
-                <Text style={styles.emptyStateSubtext}>
+                <CalendarIcon color={colors.text.disabled} size={48} />
+                <Text style={[styles.emptyStateText, { color: colors.text.secondary }]}>No events found</Text>
+                <Text style={[styles.emptyStateSubtext, { color: colors.text.disabled }]}>
                   Try adjusting your filters
                 </Text>
               </View>
@@ -254,7 +298,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     flexDirection: "row",
-    backgroundColor: Colors.background.main,
   },
   content: {
     flex: 1,
@@ -264,50 +307,47 @@ const styles = StyleSheet.create({
       },
     }),
   },
+  contentMobile: {
+    marginLeft: 0,
+  },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     padding: 24,
-    backgroundColor: Colors.background.card,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border.light,
   },
   greeting: {
     fontSize: 24,
     fontWeight: "700" as const,
-    color: Colors.text.primary,
   },
   subtitle: {
     fontSize: 14,
-    color: Colors.text.secondary,
     marginTop: 4,
   },
   createButton: {
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    backgroundColor: Colors.primary.main,
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 8,
   },
   createButtonText: {
-    color: Colors.text.inverse,
     fontSize: 14,
     fontWeight: "600" as const,
   },
   controls: {
-    backgroundColor: Colors.background.card,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border.light,
-    paddingHorizontal: 24,
+    paddingHorizontal: 16,
     paddingVertical: 16,
   },
   filterRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    flexWrap: "wrap",
+    gap: 8,
   },
   filterButton: {
     flexDirection: "row",
@@ -317,33 +357,24 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: Colors.primary.main,
   },
   filterButtonText: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: Colors.primary.main,
   },
   sortButtons: {
     flexDirection: "row",
     gap: 8,
+    flexWrap: "wrap",
   },
   sortButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
-    backgroundColor: Colors.neutral.gray100,
-  },
-  sortButtonActive: {
-    backgroundColor: Colors.primary.main,
   },
   sortButtonText: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: Colors.text.secondary,
-  },
-  sortButtonTextActive: {
-    color: Colors.text.inverse,
   },
   filterOptions: {
     flexDirection: "row",
@@ -355,28 +386,24 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
-    backgroundColor: Colors.neutral.gray50,
     borderWidth: 1,
-    borderColor: Colors.border.light,
-  },
-  filterOptionActive: {
-    backgroundColor: Colors.primary.main + "20",
-    borderColor: Colors.primary.main,
   },
   filterOptionText: {
     fontSize: 13,
     fontWeight: "600" as const,
-    color: Colors.text.secondary,
-  },
-  filterOptionTextActive: {
-    color: Colors.primary.main,
   },
   scrollView: {
     flex: 1,
   },
+  scrollContent: {
+    flexGrow: 1,
+  },
   eventsList: {
     padding: 24,
     gap: 12,
+  },
+  eventsListMobile: {
+    padding: 16,
   },
   emptyState: {
     alignItems: "center",
@@ -385,12 +412,10 @@ const styles = StyleSheet.create({
   emptyStateText: {
     fontSize: 16,
     fontWeight: "600" as const,
-    color: Colors.text.secondary,
     marginTop: 16,
   },
   emptyStateSubtext: {
     fontSize: 14,
-    color: Colors.text.disabled,
     marginTop: 4,
   },
 });

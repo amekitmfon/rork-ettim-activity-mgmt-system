@@ -6,6 +6,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { EventsProvider } from "@/contexts/EventsContext";
 import { InvitationsProvider } from "@/contexts/InvitationsContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 import { trpc, trpcClient } from "@/lib/trpc";
 
 SplashScreen.preventAutoHideAsync();
@@ -45,6 +46,8 @@ function RootLayoutNav() {
       <Stack.Screen name="event/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="events" options={{ headerShown: false }} />
       <Stack.Screen name="invitations" options={{ headerShown: false }} />
+      <Stack.Screen name="settings" options={{ headerShown: false }} />
+      <Stack.Screen name="notifications" options={{ headerShown: false }} />
       <Stack.Screen
         name="create-event"
         options={{ headerShown: false, presentation: "modal" }}
@@ -58,13 +61,15 @@ export default function RootLayout() {
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>
         <GestureHandlerRootView style={{ flex: 1 }}>
-          <AuthProvider>
-            <EventsProvider>
-              <InvitationsProvider>
-                <RootLayoutNav />
-              </InvitationsProvider>
-            </EventsProvider>
-          </AuthProvider>
+          <ThemeProvider>
+            <AuthProvider>
+              <EventsProvider>
+                <InvitationsProvider>
+                  <RootLayoutNav />
+                </InvitationsProvider>
+              </EventsProvider>
+            </AuthProvider>
+          </ThemeProvider>
         </GestureHandlerRootView>
       </QueryClientProvider>
     </trpc.Provider>
