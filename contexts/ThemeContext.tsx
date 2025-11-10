@@ -1,6 +1,7 @@
 import createContextHook from "@nkzw/create-context-hook";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { Platform } from "react-native";
 
 export type Language = "en" | "fr";
 export type ThemeMode = "light" | "dark";
@@ -247,6 +248,13 @@ export const [ThemeProvider, useTheme] = createContextHook(() => {
     () => (themeMode === "light" ? LIGHT_THEME : DARK_THEME),
     [themeMode]
   );
+
+  useEffect(() => {
+    if (Platform.OS === "web" && typeof document !== "undefined") {
+      document.body.style.backgroundColor = colors.background.main;
+      document.documentElement.style.backgroundColor = colors.background.main;
+    }
+  }, [colors.background.main]);
 
   return useMemo(
     () => ({
